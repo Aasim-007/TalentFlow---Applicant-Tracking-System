@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>TalentFlow — Applicant Tracking System</title>
+    <title>HR Dashboard — TalentFlow</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         :root{ --bg-dark-top:#071428; --bg-dark-bottom:#0b2340; --bg-light-top:#f6f9fc; --bg-light-bottom:#e9f0f6; --card-bg-dark: rgba(255,255,255,0.02); --text-dark:#e9f3ff; --text-light:#0b1220; --muted-dark:#9aa7bb; --muted-light:#5b6b78; --accent1:#60a5fa; --accent2:#6ee7b7; --danger:#e55353; --radius:12px; --shadow:0 12px 30px rgba(2,8,23,0.16); font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial; }
@@ -15,13 +15,13 @@
         .wrap{ max-width:980px; margin:0 auto; }
         header{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:20px; }
         .title{ display:flex; flex-direction:column; gap:4px; }
-        .title h1{ margin:0; font-size:26px; font-weight:700; }
+        .title h1{ margin:0; font-size:22px; font-weight:700; }
         .hint{margin:0;color:var(--muted);font-size:14px}
         .card{ background:color-mix(in srgb,var(--text) 3%,transparent); border-radius:var(--radius); padding:20px; margin-bottom:14px; box-shadow:var(--shadow); border:1px solid rgba(0,0,0,0.03); }
-        .links{ display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:14px; margin-top:20px; }
-        .link-btn{ display:flex; align-items:center; gap:12px; padding:16px 20px; border-radius:10px; text-decoration:none; background:linear-gradient(135deg,rgba(96,165,250,0.12),rgba(110,231,183,0.12)); border:1px solid rgba(96,165,250,0.25); color:var(--text); font-weight:600; font-size:15px; transition:all .22s ease; box-shadow:0 4px 12px rgba(2,8,23,0.08); }
-        .link-btn:hover{ background:linear-gradient(135deg,rgba(96,165,250,0.22),rgba(110,231,183,0.22)); border-color:rgba(96,165,250,0.45); transform:translateY(-2px); box-shadow:0 8px 20px rgba(2,8,23,0.14); }
-        .link-btn .icon{ font-size:24px; opacity:.9; }
+        .stats{ display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; }
+        .stat{ padding:16px; border-radius:10px; background:linear-gradient(135deg,rgba(96,165,250,0.12),rgba(110,231,183,0.12)); border:1px solid rgba(96,165,250,0.25); }
+        .stat h3{ margin:0 0 6px 0; font-size:13px; color:var(--muted); font-weight:600; }
+        .stat .num{ font-size:28px; font-weight:800; }
         .theme-control{ display:flex; align-items:center; gap:10px; cursor:pointer; user-select:none; }
         .toggle{ --w:56px; --h:30px; width:var(--w); height:var(--h); border-radius:999px; background:rgba(255,255,255,0.06); display:inline-block; position:relative; padding:0; transition:background .18s ease; }
         .toggle .knob{ position:absolute; top:50%; left:4px; width:22px; height:22px; border-radius:50%; background:#fff; box-shadow:0 6px 16px rgba(2,8,23,0.22); transform:translateY(-50%); transition:left .22s ease, background .22s ease, box-shadow .22s ease; }
@@ -31,85 +31,61 @@
         .toggle .left{ left:10px; }
         .toggle .right{ right:10px; }
         .muted{ color:var(--muted); font-size:13px; }
-        @media (max-width:720px){ body{ padding:14px; } .card{ padding:16px; } .links{ grid-template-columns:1fr; } }
+        .jobs{ display:grid; gap:10px; }
+        .job{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:14px; border-radius:10px; border:1px solid rgba(0,0,0,0.06); background:rgba(255,255,255,0.02); cursor:pointer; transition:transform .12s ease, box-shadow .18s ease, border-color .18s ease; }
+        .job:hover{ transform:translateY(-1px); box-shadow:0 8px 20px rgba(2,8,23,0.14); border-color:rgba(96,165,250,0.45); }
+        .job .title{ font-weight:700; color:var(--text); }
+        .meta{ display:flex; flex-wrap:wrap; gap:10px; color:var(--muted); font-size:13px; }
+        .badge{ padding:6px 10px; border-radius:999px; font-size:12px; font-weight:700; }
+        .b-active{ background:rgba(16,185,129,0.18); color:#22c55e; border:1px solid rgba(16,185,129,0.35); }
+        .b-pending{ background:rgba(234,179,8,0.18); color:#f59e0b; border:1px solid rgba(234,179,8,0.35); }
+        .b-closed{ background:rgba(239,68,68,0.18); color:#ef4444; border:1px solid rgba(239,68,68,0.35); }
+        .filters{ display:flex; gap:8px; }
+        .filter{ padding:8px 12px; border-radius:10px; background:transparent; color:var(--muted); border:1px solid rgba(0,0,0,0.10); cursor:pointer; font-weight:600; }
+        .filter.active{ background:linear-gradient(90deg,var(--accent2),var(--accent1)); color:#022027; border:0; }
+        .center{ text-align:center; color:var(--muted); padding:20px; }
+        @media (max-width:720px){ body{ padding:14px; } .card{ padding:16px; } }
     </style>
 </head>
 <body>
-<div class="wrap" role="application">
+<div class="wrap">
     <header>
         <div class="title">
-            <h1>TalentFlow</h1>
-            <p class="hint">Applicant Tracking System</p>
+            <h1>HR Dashboard</h1>
+            <p class="hint">Manage job postings and recruitment activities</p>
         </div>
         <div class="theme-control" id="themeControl" role="button" tabindex="0" aria-pressed="false" aria-label="Toggle theme">
             <span id="themeLabel" class="muted">Dark Mode</span>
-            <div class="toggle" id="themeToggle" aria-hidden="true">
+            <div class="toggle" aria-hidden="true">
                 <svg class="icon left" viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" fill="currentColor"/></svg>
-                <div class="knob" id="themeKnob" aria-hidden="true"></div>
+                <div class="knob" aria-hidden="true"></div>
                 <svg class="icon right" viewBox="0 0 24 24" fill="none"><g fill="currentColor"><circle cx="12" cy="12" r="3.25"/><path d="M12 2v1.8M12 20.2V22M4.93 4.93l1.27 1.27M17.8 17.8l1.27 1.27M2 12h1.8M20.2 12H22M4.93 19.07l1.27-1.27M17.8 6.2l1.27-1.27" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></g></svg>
             </div>
         </div>
     </header>
 
-    <main>
-        <section class="card">
-            <h2 style="margin:0 0 8px 0;font-size:20px;font-weight:600;">Welcome to the Dashboard</h2>
-            <p class="muted" style="margin:0;">Select an action to get started with your recruitment workflow.</p>
+    <section class="card">
+        <div class="stats">
+            <div class="stat"><h3>Total Active Jobs</h3><div class="num" id="totalActive">0</div></div>
+            <div class="stat"><h3>Pending Review</h3><div class="num" id="totalPending">0</div></div>
+            <div class="stat"><h3>Closed This Month</h3><div class="num" id="totalClosed">0</div></div>
+        </div>
+    </section>
 
-            <div class="links">
-                <a class="link-btn" href="/add-job/add-job.html">
-                    <span class="icon">➕</span>
-                    <span>Add New Job</span>
-                </a>
-                <a class="link-btn" href="/jobs/list.html">
-                    <span class="icon">📄</span>
-                    <span>View All Jobs</span>
-                </a>
-                <a class="link-btn" href="/candidates/list.html">
-                    <span class="icon">👤</span>
-                    <span>View Candidates</span>
-                </a>
-                <a class="link-btn" href="hr-dashboard/dashboard.html">
-                    <span class="icon">📊</span>
-                    <span>HR Dashboard</span>
-                </a>
+    <section class="card">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px;">
+            <h2 style="margin:0;font-size:18px">Active Job Postings</h2>
+            <div class="filters">
+                <button class="filter" data-filter="all">All</button>
+                <button class="filter active" data-filter="active">Active</button>
+                <button class="filter" data-filter="pending">Pending</button>
             </div>
-        </section>
-    </main>
+        </div>
+        <div id="errorBox" class="center" style="display:none;color:#ef4444"></div>
+        <div id="jobs" class="jobs"><div class="center">Loading jobs…</div></div>
+    </section>
 </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    const body = document.body;
-    const themeControl = document.getElementById('themeControl');
-    const themeLabel = document.getElementById('themeLabel');
-
-    const THEME_KEY = 'talentflow_theme';
-    function applyTheme(t){
-        if(t === 'light') body.classList.add('theme-light'); else body.classList.remove('theme-light');
-        themeLabel.textContent = (t === 'light') ? 'Light Mode' : 'Dark Mode';
-        if(themeControl) themeControl.setAttribute('aria-pressed', t === 'light' ? 'true' : 'false');
-        body.style.backgroundAttachment = 'fixed';
-        body.style.minHeight = '100vh';
-        body.style.backgroundSize = 'cover';
-    }
-    const savedTheme = (function(){ try { return localStorage.getItem(THEME_KEY) || 'dark'; } catch(e){ return 'dark'; } })();
-    applyTheme(savedTheme);
-    function toggleTheme(){
-        const cur = body.classList.contains('theme-light') ? 'light' : 'dark';
-        const next = cur === 'light' ? 'dark' : 'light';
-        applyTheme(next);
-        try{ localStorage.setItem(THEME_KEY, next); } catch(e){}
-    }
-    if(themeControl) themeControl.addEventListener('click', toggleTheme);
-    if(themeControl) themeControl.addEventListener('keydown', (e)=> {
-        if(e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            toggleTheme();
-        }
-    });
-});
-</script>
+<script src="dashboard.js"></script>
 </body>
 </html>
-

@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Job Details — TalentFlow</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{ --bg-dark-top:#071428; --bg-dark-bottom:#0b2340; --bg-light-top:#f6f9fc; --bg-light-bottom:#e9f0f6; --card-bg-dark: rgba(255,255,255,0.02); --text-dark:#e9f3ff; --text-light:#0b1220; --muted-dark:#9aa7bb; --muted-light:#5b6b78; --accent1:#60a5fa; --accent2:#6ee7b7; --danger:#e55353; --radius:12px; --shadow:0 12px 30px rgba(2,8,23,0.16); font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial; }
+    html,body{height:100%;margin:0;padding:0}
+    body{ --text:var(--text-dark); --muted:var(--muted-dark); background:linear-gradient(180deg,var(--bg-dark-top) 0%,var(--bg-dark-bottom) 100%); background-attachment:fixed; background-size:cover; min-height:100vh; color:var(--text); padding:26px; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; box-sizing:border-box; transition:background .22s ease,color .18s ease; line-height:1.35; }
+    body.theme-light{ --text:var(--text-light); --muted:var(--muted-light); background:linear-gradient(180deg,var(--bg-light-top) 0%,var(--bg-light-bottom) 100%); background-attachment:fixed!important; background-size:cover!important; min-height:100vh!important; }
+    body:not(.theme-light){ color-scheme: dark; }
+    *{box-sizing:border-box}
+    .wrap{ max-width:1100px; margin:0 auto; }
+    header{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px; }
+    .title{ display:flex; flex-direction:column; gap:4px; }
+    .title h1{ margin:0; font-size:22px; font-weight:700; }
+    .hint{margin:0;color:var(--muted);font-size:14px}
+    .theme-control{ display:flex; align-items:center; gap:10px; cursor:pointer; user-select:none; }
+    .toggle{ --w:56px; --h:30px; width:var(--w); height:var(--h); border-radius:999px; background:rgba(255,255,255,0.06); display:inline-block; position:relative; padding:0; transition:background .18s ease; }
+    .toggle .knob{ position:absolute; top:50%; left:4px; width:22px; height:22px; border-radius:50%; background:#fff; box-shadow:0 6px 16px rgba(2,8,23,0.22); transform:translateY(-50%); transition:left .22s ease, background .22s ease, box-shadow .22s ease; }
+    body.theme-light .toggle{ background:rgba(0,0,0,0.08); }
+    body.theme-light .toggle .knob{ left:calc(100% - 4px - 22px); background:#111827; }
+    .toggle .icon{ width:16px; height:16px; opacity:.85; position:absolute; top:50%; transform:translateY(-50%); pointer-events:none; }
+    .toggle .left{ left:10px; }
+    .toggle .right{ right:10px; }
+    .muted{ color:var(--muted); font-size:13px; }
+
+    .card{ background:color-mix(in srgb,var(--text) 3%,transparent); border-radius:var(--radius); padding:20px; margin-bottom:14px; box-shadow:var(--shadow); border:1px solid rgba(0,0,0,0.03); }
+    .back{ background:transparent; color:var(--muted); border:1px solid rgba(0,0,0,0.10); border-radius:10px; padding:8px 12px; cursor:pointer; }
+    .job-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:14px; }
+    .job-title{ margin:0; font-size:22px; font-weight:800; }
+    .job-meta{ display:flex; flex-wrap:wrap; gap:10px; color:var(--muted); font-size:13px; margin-top:6px; }
+    .badge{ padding:8px 12px; border-radius:999px; font-size:12px; font-weight:700; }
+    .b-active{ background:rgba(16,185,129,0.18); color:#22c55e; border:1px solid rgba(16,185,129,0.35); }
+    .b-pending{ background:rgba(234,179,8,0.18); color:#f59e0b; border:1px solid rgba(234,179,8,0.35); }
+    .b-closed{ background:rgba(239,68,68,0.18); color:#ef4444; border:1px solid rgba(239,68,68,0.35); }
+
+    .layout{ display:grid; grid-template-columns:1fr 300px; gap:14px; }
+    .list{ display:grid; gap:12px; }
+    .app-card{ padding:16px; border-radius:10px; border:1px solid rgba(0,0,0,0.08); background:rgba(255,255,255,0.02); }
+    .app-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:10px; }
+    .app-name{ font-weight:700; font-size:16px; }
+    .app-status{ padding:6px 10px; border-radius:999px; font-size:12px; font-weight:700; }
+    .s-new{ background:rgba(59,130,246,0.18); color:#60a5fa; border:1px solid rgba(59,130,246,0.35); }
+    .s-under-review{ background:rgba(234,179,8,0.18); color:#f59e0b; border:1px solid rgba(234,179,8,0.35); }
+    .s-accepted{ background:rgba(16,185,129,0.18); color:#22c55e; border:1px solid rgba(16,185,129,0.35); }
+    .s-rejected{ background:rgba(239,68,68,0.18); color:#ef4444; border:1px solid rgba(239,68,68,0.35); }
+    .app-details{ color:var(--muted); font-size:13px; display:flex; flex-direction:column; gap:4px; }
+    .actions{ display:flex; gap:8px; margin-top:10px; }
+    .btn{ padding:10px 12px; border-radius:10px; border:0; background:linear-gradient(90deg,var(--accent2),var(--accent1)); color:#022027; font-weight:700; cursor:pointer; box-shadow:0 8px 22px rgba(2,8,23,0.10); }
+    .ghost{ padding:9px 12px; background:transparent; color:var(--muted); border:1px solid rgba(0,0,0,0.10); border-radius:10px; cursor:pointer; }
+    .danger{ background:linear-gradient(90deg,#ef4444,#f97316); color:#fff; }
+    .success{ background:linear-gradient(90deg,#22c55e,#60a5fa); color:#022027; }
+    .btn:disabled{ opacity:.6; cursor:not-allowed; }
+    .controls{ display:flex; gap:8px; margin-bottom:10px; }
+    .input, select{ padding:10px 12px; border-radius:10px; border:1px solid rgba(0,0,0,0.10); background:transparent; color:var(--text); }
+    body.theme-light .input, body.theme-light select{ background:#fff; color:var(--text-light); border:1px solid rgba(0,0,0,0.12); }
+    .center{ text-align:center; color:var(--muted); padding:20px; }
+    @media (max-width:968px){ .layout{ grid-template-columns:1fr; } body{ padding:14px; } .card{ padding:16px; } }
+  </style>
+  <link rel="preload" as="script" href="job-details.js">
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="title">
+        <h1>Job Details</h1>
+        <p class="hint">Review applicants and manage the pipeline</p>
+      </div>
+      <div class="theme-control" id="themeControl" role="button" tabindex="0" aria-pressed="false" aria-label="Toggle theme">
+        <span id="themeLabel" class="muted">Dark Mode</span>
+        <div class="toggle" aria-hidden="true">
+          <svg class="icon left" viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" fill="currentColor"/></svg>
+          <div class="knob" aria-hidden="true"></div>
+          <svg class="icon right" viewBox="0 0 24 24" fill="none"><g fill="currentColor"><circle cx="12" cy="12" r="3.25"/><path d="M12 2v1.8M12 20.2V22M4.93 4.93l1.27 1.27M17.8 17.8l1.27 1.27M2 12h1.8M20.2 12H22M4.93 19.07l1.27-1.27M17.8 6.2l1.27-1.27" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></g></svg>
+        </div>
+      </div>
+    </header>
+
+    <section class="card">
+      <button class="back" id="backBtn">← Back to Dashboard</button>
+      <div class="job-head" style="margin-top:10px">
+        <div>
+          <h2 id="jobTitle" class="job-title">Loading…</h2>
+          <div class="muted" id="jobId">Job ID: —</div>
+          <div class="job-meta">
+            <span>📍 <span id="jobLocation">—</span></span>
+            <span>🏢 <span id="jobDepartment">—</span></span>
+            <span>📅 Posted: <span id="jobPostedDate">—</span></span>
+          </div>
+        </div>
+        <span id="jobStatus" class="badge b-pending">Pending</span>
+      </div>
+    </section>
+
+    <div class="layout">
+      <section class="card">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:6px;">
+          <h3 style="margin:0">Applicants</h3>
+          <span class="badge b-active" id="applicantCount">0</span>
+        </div>
+        <div class="controls">
+          <input id="searchBox" class="input" placeholder="Search applicants…" />
+          <select id="statusFilter" class="input">
+            <option value="all">All Status</option>
+            <option value="new">New</option>
+            <option value="under-review">Under Review</option>
+            <option value="accepted">Accepted</option>
+            <option value="rejected">Rejected</option>
+          </select>
+        </div>
+        <div id="applicants" class="list"><div class="center">Loading applicants…</div></div>
+      </section>
+
+      <aside>
+        <section class="card">
+          <h3 style="margin:0 0 10px 0">Application Stats</h3>
+          <div style="display:grid; gap:8px;">
+            <div style="display:flex; justify-content:space-between;"><span class="muted">Total</span><strong id="totalApplicants">0</strong></div>
+            <div style="display:flex; justify-content:space-between;"><span class="muted">New</span><strong id="newApplicants">0</strong></div>
+            <div style="display:flex; justify-content:space-between;"><span class="muted">Under Review</span><strong id="reviewApplicants">0</strong></div>
+            <div style="display:flex; justify-content:space-between;"><span class="muted">Accepted</span><strong id="acceptedApplicants">0</strong></div>
+            <div style="display:flex; justify-content:space-between;"><span class="muted">Rejected</span><strong id="rejectedApplicants">0</strong></div>
+          </div>
+        </section>
+        <section class="card">
+          <h3 style="margin:0 0 10px 0">Next Steps</h3>
+          <button id="moveNextBtn" class="btn" style="width:100%">Move Selected to Next Round →</button>
+        </section>
+      </aside>
+    </div>
+  </div>
+
+  <script src="job-details.js"></script>
+</body>
+</html>

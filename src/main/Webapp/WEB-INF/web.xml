@@ -37,4 +37,10 @@
   </servlet-mapping>
 
   <!-- Keep default servlet to serve static resources -->
+  
+  <!-- Make the login page the default when browsing to the root URL -->
+  <welcome-file-list>
+    <welcome-file>login/login.html</welcome-file>
+    <welcome-file>index.html</welcome-file>
+  </welcome-file-list>
 </web-app>

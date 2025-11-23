@@ -1,0 +1,118 @@
+(function(){
+  // Theme utilities copied from index to keep consistent UX
+  function applyThemeToBody(body, themeControl){
+    const themeLabel = document.getElementById('themeLabel');
+    return function applyTheme(t){
+      if(t === 'light') body.classList.add('theme-light'); else body.classList.remove('theme-light');
+      if(themeLabel) themeLabel.textContent = (t === 'light') ? 'Light Mode' : 'Dark Mode';
+      if(themeControl) themeControl.setAttribute('aria-pressed', t === 'light' ? 'true' : 'false');
+      body.style.backgroundAttachment = 'fixed';
+      body.style.minHeight = '100vh';
+      body.style.backgroundSize = 'cover';
+    }
+  }
+
+  // Initialize theme + dashboard behaviors
+  const body = document.body;
+  const themeControl = document.getElementById('themeControl');
+  const THEME_KEY = 'talentflow_theme';
+  const applyTheme = applyThemeToBody(body, themeControl);
+  const savedTheme = (function(){ try { return localStorage.getItem(THEME_KEY) || 'dark'; } catch(e){ return 'dark'; } })();
+  applyTheme(savedTheme);
+  function toggleTheme(){
+    const cur = body.classList.contains('theme-light') ? 'light' : 'dark';
+    const next = cur === 'light' ? 'dark' : 'light';
+    applyTheme(next);
+    try{ localStorage.setItem(THEME_KEY, next); } catch(e){}
+  }
+  if(themeControl) themeControl.addEventListener('click', toggleTheme);
+  if(themeControl) themeControl.addEventListener('keydown', (e)=> { if(e.key==='Enter'||e.key===' '){ e.preventDefault(); toggleTheme(); }});
+
+  const jobsEl = document.getElementById('jobs');
+  const errorEl = document.getElementById('errorBox');
+  const filters = document.querySelectorAll('.filter');
+  let allJobs = [];
+  let currentFilter = 'active';
+
+  function statusBadgeClass(s){
+    if(s === 'active') return 'badge b-active';
+    if(s === 'pending') return 'badge b-pending';
+    if(s === 'closed') return 'badge b-closed';
+    return 'badge';
+  }
+
+  function formatDate(iso){
+    if(!iso) return 'N/A';
+    try{
+      const d = new Date(iso);
+      return d.toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'});
+    } catch(e){ return iso; }
+  }
+
+  function updateStats(){
+    const active = allJobs.filter(j=>j.status==='active').length;
+    const pending = allJobs.filter(j=>j.status==='pending').length;
+    const closed = allJobs.filter(j=>j.status==='closed').length;
+    const a = document.getElementById('totalActive'); if(a) a.textContent = active;
+    const p = document.getElementById('totalPending'); if(p) p.textContent = pending;
+    const c = document.getElementById('totalClosed'); if(c) c.textContent = closed;
+  }
+
+  function render(){
+    let list = allJobs;
+    if(currentFilter !== 'all') list = list.filter(j=>j.status===currentFilter);
+    if(!list.length){ jobsEl.innerHTML = '<div class="center">No jobs found</div>'; return; }
+    jobsEl.innerHTML = list.map(j => `
+      <div class="job" role="button" tabindex="0" data-id="${j.id}">
+        <div>
+          <div class="title">${j.title || 'Untitled Role'}</div>
+          <div class="meta">
+            <span>📍 ${j.location || 'Not specified'}</span>
+            <span>🏢 ${j.department || 'General'}</span>
+            <span>📅 Posted: ${formatDate(j.postedDate)}</span>
+          </div>
+        </div>
+        <span class="${statusBadgeClass(j.status)}">${(j.status||'').replace(/^./, m=>m.toUpperCase())}</span>
+      </div>
+    `).join('');
+
+    // Attach navigation handlers
+    jobsEl.querySelectorAll('.job').forEach(el=>{
+      const id = el.getAttribute('data-id');
+      function nav(){ window.location.href = `/job-details/job-details.html?id=${id}`; }
+      el.addEventListener('click', nav);
+      el.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); nav(); }});
+    });
+  }
+
+  async function load(){
+    try{
+      errorEl.style.display = 'none';
+      jobsEl.innerHTML = '<div class="center">Loading jobs…</div>';
+      const resp = await fetch('/api/jobs?status=all', { headers: { 'Accept':'application/json' } });
+      if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const data = await resp.json();
+      // Expect array of {id,title,department,location,status,postedDate}
+      allJobs = Array.isArray(data) ? data : [];
+      updateStats();
+      render();
+    }catch(err){
+      console.error('Failed to load jobs', err);
+      errorEl.textContent = 'Failed to load jobs. Please try again later.';
+      errorEl.style.display = 'block';
+      jobsEl.innerHTML = '<div class="center">No jobs to show</div>';
+    }
+  }
+
+  // Filter buttons
+  filters.forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      filters.forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      currentFilter = btn.getAttribute('data-filter');
+      render();
+    });
+  });
+
+  load();
+})();
