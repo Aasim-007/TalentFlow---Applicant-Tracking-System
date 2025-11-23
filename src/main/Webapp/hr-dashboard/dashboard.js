@@ -79,7 +79,7 @@
     // Attach navigation handlers
     jobsEl.querySelectorAll('.job').forEach(el=>{
       const id = el.getAttribute('data-id');
-      function nav(){ window.location.href = `/job-details.html?id=${id}`; }
+      function nav(){ window.location.href = `/job-details/job-details.html?id=${id}`; }
       el.addEventListener('click', nav);
       el.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); nav(); }});
     });

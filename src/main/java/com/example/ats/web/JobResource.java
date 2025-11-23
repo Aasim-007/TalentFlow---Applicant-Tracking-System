@@ -29,6 +29,60 @@ public class JobResource {
         this.initError = null;
     }
 
+    @GET
+    @Path("/{id}")
+    public Response getJobById(@PathParam("id") Long id){
+        if (id == null){
+            Map<String,Object> err = new HashMap<>();
+            err.put("status","error");
+            err.put("reason","Missing id");
+            return Response.status(Response.Status.BAD_REQUEST).entity(err).build();
+        }
+        EntityManager em = null;
+        try {
+            em = getEmf().createEntityManager();
+            String sql = "SELECT id, title, department, location, status, created_at FROM jobs WHERE id = ?1";
+            Query q = em.createNativeQuery(sql);
+            q.setParameter(1, id);
+            @SuppressWarnings("unchecked")
+            List<Object[]> rows = q.getResultList();
+            if (rows.isEmpty()){
+                return Response.status(Response.Status.NOT_FOUND).entity(Map.of("status","error","reason","Job not found")).build();
+            }
+            Object[] r = rows.get(0);
+            Map<String,Object> m = new HashMap<>();
+            m.put("id", r[0] == null ? null : ((Number)r[0]).longValue());
+            m.put("title", r[1]);
+            m.put("department", r[2]);
+            m.put("location", r[3]);
+            String st = r[4] == null ? null : r[4].toString();
+            String uiStatus;
+            if (st == null) uiStatus = "pending";
+            else if ("published".equalsIgnoreCase(st)) uiStatus = "active";
+            else if ("draft".equalsIgnoreCase(st)) uiStatus = "pending";
+            else if ("closed".equalsIgnoreCase(st)) uiStatus = "closed";
+            else uiStatus = st.toLowerCase(Locale.ROOT);
+            m.put("status", uiStatus);
+            Object created = r[5];
+            String isoDate = null;
+            if (created instanceof java.sql.Timestamp ts){
+                isoDate = ts.toInstant().toString();
+            } else if (created != null){
+                isoDate = created.toString();
+            }
+            m.put("postedDate", isoDate);
+            return Response.ok(m).build();
+        } catch(Exception e){
+            Map<String,Object> err = new HashMap<>();
+            err.put("status", "error");
+            err.put("reason", "Failed to fetch job");
+            err.put("details", e.getClass().getName() + ": " + e.getMessage());
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(err).build();
+        } finally {
+            if (em != null){ try { em.close(); } catch(Exception ignore){} }
+        }
+    }
+
     // Lazily initialize the JobService to avoid blocking server startup (DB may be unreachable)
     private synchronized void initializeServiceIfNeeded(){
         if(this.jobService != null) return;

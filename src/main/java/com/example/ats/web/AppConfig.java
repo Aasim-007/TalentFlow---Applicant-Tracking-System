@@ -12,6 +12,7 @@ public class AppConfig extends Application {
         Set<Class<?>> s = new HashSet<>();
         s.add(JobResource.class);
         s.add(ManagerResource.class);
+        s.add(ApplicationResource.class);
         // register JacksonFeature so Jersey can (de)serialize JSON for Collections/POJOs
         s.add(JacksonFeature.class);
         return s;
