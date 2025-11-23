@@ -101,4 +101,31 @@ public class Job {
 
     public String getFormLink(){ return formLink; }
     public void setFormLink(String formLink){ this.formLink = formLink; }
+
+    // Helper methods for setting from strings (used in REST endpoints)
+    public void setEmploymentTypeFromString(String typeStr) {
+        if (typeStr != null && !typeStr.isEmpty()) {
+            this.employmentType = EmploymentType.fromDb(typeStr);
+        }
+    }
+
+    public void setStatusFromString(String statusStr) {
+        if (statusStr != null && !statusStr.isEmpty()) {
+            this.status = JobStatus.fromDb(statusStr);
+        }
+    }
+
+    public void setApplicationDeadlineFromString(String dateStr) {
+        if (dateStr != null && !dateStr.isEmpty()) {
+            this.applicationDeadline = java.time.OffsetDateTime.parse(dateStr);
+        }
+    }
+
+    public void setSalaryMin(Double value) {
+        this.salaryMin = value != null ? java.math.BigDecimal.valueOf(value) : null;
+    }
+
+    public void setSalaryMax(Double value) {
+        this.salaryMax = value != null ? java.math.BigDecimal.valueOf(value) : null;
+    }
 }

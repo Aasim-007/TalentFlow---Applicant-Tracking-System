@@ -136,4 +136,10 @@ public class JobRepository {
             }
         }
     }
+
+    public List<Job> findAll(){
+        try (EntityManager em = emf.createEntityManager()) {
+            return em.createQuery("SELECT j FROM Job j", Job.class).getResultList();
+        }
+    }
 }

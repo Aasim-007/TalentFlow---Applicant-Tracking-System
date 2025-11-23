@@ -15,14 +15,14 @@ public class JobDescription {
     private String description;
 
     @Column(name = "weightage")
-    private Integer weight;
+    private Double weight;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "job_id", nullable = false)
     private Job job;
 
     public JobDescription() {}
-    public JobDescription(String title, String description, Integer weight){
+    public JobDescription(String title, String description, Double weight){
         this.title = title; this.description = description; this.weight = weight;
     }
 
@@ -32,8 +32,8 @@ public class JobDescription {
     public void setTitle(String title){ this.title = title; }
     public String getDescription(){ return description; }
     public void setDescription(String description){ this.description = description; }
-    public Integer getWeight(){ return weight; }
-    public void setWeight(Integer weight){ this.weight = weight; }
+    public Double getWeight(){ return weight; }
+    public void setWeight(Double weight){ this.weight = weight; }
     public Job getJob(){ return job; }
     public void setJob(Job job){ this.job = job; }
 }

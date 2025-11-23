@@ -242,7 +242,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <h2 style="margin:0 0 12px 0;color:var(--danger);">Job Not Available</h2>
                 <p class="muted" style="margin:0 0 20px 0;">${escapeHtml(message)}</p>
                 <p class="muted">This job posting is either closed, in draft status, or has been removed.</p>
-                <button onclick="window.location.href='/index.html'" class="btn" style="margin-top:20px;">← Back to Dashboard</button>
+                <button onclick="window.location.href='/applicant-landing/index.html'" class="btn" style="margin-top:20px;">← Back to Dashboard</button>
             </section>
         `;
     }

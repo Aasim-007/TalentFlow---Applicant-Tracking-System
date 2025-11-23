@@ -134,7 +134,7 @@ public class JobCreateServlet extends HttpServlet {
                     jd.setTitle(extractStringField(p, "title"));
                     jd.setDescription(extractStringField(p, "description"));
                     String w = extractNumberField(p);
-                    try { jd.setWeight(w == null ? null : (int) Double.parseDouble(w)); } catch(Exception e){ jd.setWeight(null); }
+                    try { jd.setWeight(w == null ? null : Double.parseDouble(w)); } catch(Exception e){ jd.setWeight(null); }
                     jds.add(jd);
                 }
             }

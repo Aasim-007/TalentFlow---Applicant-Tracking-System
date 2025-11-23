@@ -26,7 +26,7 @@ public class JobCreateRequest {
     public static class JD {
         private String title;
         private String description;
-        private Integer weight;
+        private Double weight;
 
         // No-args constructor
         public JD() {}
@@ -38,8 +38,8 @@ public class JobCreateRequest {
         public String getDescription() { return description; }
         public void setDescription(String description) { this.description = description; }
 
-        public Integer getWeight() { return weight; }
-        public void setWeight(Integer weight) { this.weight = weight; }
+        public Double getWeight() { return weight; }
+        public void setWeight(Double weight) { this.weight = weight; }
     }
 
     // getters & setters

@@ -358,7 +358,7 @@ document.addEventListener('DOMContentLoaded', () => {
         dashboardBtn.className='ghost';
         dashboardBtn.textContent='← Back to Dashboard';
         dashboardBtn.addEventListener('click', () => {
-            window.location.href = '/index.html';
+            window.location.href = '/hr-dashboard/dashboard.html';
         });
 
         actions.appendChild(editBtn);

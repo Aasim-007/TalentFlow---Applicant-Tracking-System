@@ -110,4 +110,42 @@ public class JobService {
         System.out.println("Update completed successfully!");
         return result;
     }
+
+    public Job findById(Long id) {
+        return jobRepo.findById(id).orElse(null);
+    }
+
+    public List<Job> findAll() {
+        return jobRepo.findAll();
+    }
+
+    public Job update(Job job) {
+        job.setUpdatedAt(java.time.OffsetDateTime.now());
+        return jobRepo.update(job);
+    }
+
+    public void updateJobDescriptions(Job job, java.util.List<?> jdsList) {
+        // Clear existing JDs
+        job.getJds().clear();
+
+        // Add new JDs
+        if (jdsList != null && !jdsList.isEmpty()) {
+            for (Object jdObj : jdsList) {
+                if (jdObj instanceof java.util.Map) {
+                    @SuppressWarnings("unchecked")
+                    java.util.Map<String, Object> jdMap = (java.util.Map<String, Object>) jdObj;
+
+                    String title = (String) jdMap.get("title");
+                    String description = (String) jdMap.get("description");
+                    Object weightObj = jdMap.get("weight");
+                    Double weight = weightObj instanceof Number ? ((Number) weightObj).doubleValue() : 1.0;
+
+                    JobDescription jd = new JobDescription(title, description, weight);
+                    jd.setJob(job);
+                    job.getJds().add(jd);
+                }
+            }
+        }
+    }
 }
+

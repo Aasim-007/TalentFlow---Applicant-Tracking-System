@@ -6,25 +6,56 @@
   <title>Login — TalentFlow</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
-    :root{ --bg-dark-top:#071428; --bg-dark-bottom:#0b2340; --bg-light-top:#f6f9fc; --bg-light-bottom:#e9f0f6; --text-dark:#e9f3ff; --text-light:#0b1220; --muted-dark:#9aa7bb; --muted-light:#5b6b78; --accent1:#60a5fa; --accent2:#6ee7b7; --radius:12px; --shadow:0 12px 30px rgba(2,8,23,0.16); font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial; }
+    :root{ --bg-dark-top:#071428; --bg-dark-bottom:#0b2340; --bg-light-top:#f6f9fc; --bg-light-bottom:#e9f0f6; --card-bg-dark:rgba(255,255,255,0.02); --text-dark:#e9f3ff; --text-light:#0b1220; --muted-dark:#9aa7bb; --muted-light:#5b6b78; --accent1:#60a5fa; --accent2:#6ee7b7; --danger:#e55353; --radius:12px; --shadow:0 12px 30px rgba(2,8,23,0.16); font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial; }
     html,body{height:100%;margin:0;padding:0}
-    body{ --text:var(--text-dark); --muted:var(--muted-dark); background:linear-gradient(180deg,var(--bg-dark-top) 0%,var(--bg-dark-bottom) 100%); color:var(--text); min-height:100vh; padding:26px; }
-    body.theme-light{ --text:var(--text-light); --muted:var(--muted-light); background:linear-gradient(180deg,var(--bg-light-top) 0%,var(--bg-light-bottom) 100%); }
-    body:not(.theme-light){ color-scheme: dark; }
-    .wrap{ max-width:420px; margin:0 auto; min-height:calc(100vh - 52px); display:flex; flex-direction:column; justify-content:center; }
-    header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
-    .card{ background:color-mix(in srgb,var(--text) 3%,transparent); border-radius:var(--radius); padding:20px; box-shadow:var(--shadow); border:1px solid rgba(0,0,0,0.03); }
-    .title h1{ margin:0; font-size:22px; font-weight:800; }
-    label{ display:block; font-size:13px; color:var(--muted); margin-bottom:6px; }
-    .input, select{ width:80%; padding:12px 14px; border-radius:10px; border:1px solid rgba(255,255,255,0.15); background:transparent; color:var(--text); }
-    body.theme-light .input, body.theme-light select{ background:#fff; color:var(--text-light); border:1px solid rgba(0,0,0,0.12); }
-    .btn{ width:100%; padding:12px 14px; border-radius:10px; border:0; background:linear-gradient(90deg,var(--accent2),var(--accent1)); color:#022027; font-weight:800; cursor:pointer; }
+    body{ --text:var(--text-dark); --muted:var(--muted-dark); background:linear-gradient(180deg,var(--bg-dark-top) 0%,var(--bg-dark-bottom) 100%); background-attachment:fixed; background-size:cover; min-height:100vh; color:var(--text); padding:26px; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; box-sizing:border-box; transition:background .22s ease,color .18s ease; line-height:1.35; display:flex; align-items:center; justify-content:center; }
+    body.theme-light{ --text:var(--text-light); --muted:var(--muted-light); background:linear-gradient(180deg,var(--bg-light-top) 0%,var(--bg-light-bottom) 100%); background-attachment:fixed!important; background-size:cover!important; min-height:100vh!important; }
+    body:not(.theme-light){ color-scheme:dark; }
+    *{box-sizing:border-box}
+    .wrap{ max-width:480px; width:100%; }
+    header{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:20px; }
+    .title{ display:flex; flex-direction:column; gap:4px; }
+    .title h1{ margin:0; font-size:26px; font-weight:700; }
+    .hint{margin:0;color:var(--muted);font-size:14px}
+    .card{ background:color-mix(in srgb,var(--text) 3%,transparent); border-radius:var(--radius); padding:24px; box-shadow:var(--shadow); border:1px solid rgba(0,0,0,0.03); }
+    .theme-control{ display:flex; align-items:center; gap:10px; cursor:pointer; user-select:none; }
+    .toggle{ --w:56px; --h:30px; width:var(--w); height:var(--h); border-radius:999px; background:rgba(255,255,255,0.06); display:inline-block; position:relative; padding:0; transition:background .18s ease; }
+    .toggle .knob{ position:absolute; top:50%; left:4px; width:22px; height:22px; border-radius:50%; background:#fff; box-shadow:0 6px 16px rgba(2,8,23,0.22); transform:translateY(-50%); transition:left .22s ease,background .22s ease,box-shadow .22s ease; }
+    body.theme-light .toggle{ background:rgba(0,0,0,0.08); }
+    body.theme-light .toggle .knob{ left:calc(100% - 4px - 22px); background:#111827; }
+    .toggle .icon{ width:16px; height:16px; opacity:.85; position:absolute; top:50%; transform:translateY(-50%); pointer-events:none; }
+    .toggle .left{ left:10px; }
+    .toggle .right{ right:10px; }
     .muted{ color:var(--muted); font-size:13px; }
-    .row{ display:flex; gap:8px; }
-    .error{ margin-top:10px; color:#e55353; font-weight:700; display:none; }
-    .tabs{ display:flex; margin-bottom:10px; gap:8px; }
-    .tab{ flex:1; text-align:center; padding:8px 10px; border-radius:8px; cursor:pointer; border:1px solid rgba(255,255,255,0.15); }
-    .tab.active{ background:linear-gradient(135deg, rgba(96,165,250,0.22), rgba(110,231,183,0.22)); border-color:rgba(96,165,250,0.45); }
+    .tabs{ display:flex; margin-bottom:20px; gap:8px; }
+    .tab{ flex:1; text-align:center; padding:10px 12px; border-radius:8px; cursor:pointer; border:1px solid rgba(255,255,255,0.15); font-weight:600; font-size:14px; transition:all .18s ease; background:transparent; color:var(--text); }
+    .tab:hover{ background:rgba(96,165,250,0.08); }
+    .tab.active{ background:linear-gradient(135deg,rgba(96,165,250,0.22),rgba(110,231,183,0.22)); border-color:rgba(96,165,250,0.45); }
+    body.theme-light .tab{ border-color:rgba(0,0,0,0.12); }
+    body.theme-light .tab.active{ border-color:rgba(96,165,250,0.35); }
+    .field{ margin-bottom:16px; }
+    .field:last-of-type{ margin-bottom:0; }
+    label{ display:block; font-size:13px; color:var(--muted); margin-bottom:6px; font-weight:600; }
+    .input{ width:100%; padding:12px 14px; border-radius:10px; border:1px solid rgba(255,255,255,0.15); background:transparent; color:var(--text); font-size:14px; font-family:inherit; }
+    body.theme-light .input{ background:#fff; color:var(--text-light); border:1px solid rgba(0,0,0,0.12); }
+    .input:focus{ outline:none; border-color:var(--accent1); }
+    /* Enhanced select styling for better dark mode readability */
+    select{ width:100%; appearance:none; -webkit-appearance:none; -moz-appearance:none; padding:12px 14px; padding-right:36px; border-radius:10px; font-size:14px; font-family:inherit; cursor:pointer; border:1px solid rgba(255,255,255,0.15); background:#10243d; color:var(--text-dark); }
+    body.theme-light select{ background:#ffffff; border:1px solid rgba(0,0,0,0.12); color:var(--text-light); }
+    /* Option popup backgrounds with better visibility */
+    body:not(.theme-light) select option{ background:#0d1c31; color:var(--text-dark); }
+    body.theme-light select option{ background:#ffffff; color:var(--text-light); }
+    select:focus{ outline:none; border-color:var(--accent1); box-shadow:0 0 0 2px rgba(96,165,250,0.35); }
+    /* Custom arrow styling */
+    .field.has-select{ position:relative; }
+    .field.has-select::after{ content:''; position:absolute; right:14px; bottom:20px; width:0; height:0; border-left:6px solid transparent; border-right:6px solid transparent; border-top:8px solid var(--muted); pointer-events:none; }
+    .btn{ width:100%; padding:12px 14px; border-radius:10px; border:0; background:linear-gradient(90deg,var(--accent2),var(--accent1)); color:#022027; font-weight:700; cursor:pointer; box-shadow:0 8px 22px rgba(2,8,23,0.10); font-size:15px; transition:all .18s ease; font-family:inherit; }
+    .btn:hover:not(:disabled){ transform:translateY(-1px); box-shadow:0 12px 28px rgba(2,8,23,0.16); }
+    .btn:disabled{ opacity:0.6; cursor:not-allowed; }
+    .error{ margin-top:14px; padding:12px 14px; border-radius:10px; background:linear-gradient(180deg,rgba(229,83,83,0.09),rgba(229,83,83,0.06)); border:1px solid rgba(229,83,83,0.18); color:var(--danger); font-weight:600; font-size:14px; display:none; line-height:1.45; }
+    .progress-wrap{ position:relative; height:6px; background:rgba(0,0,0,0.05); border-radius:999px; overflow:hidden; margin-bottom:16px; display:none; }
+    .progress-bar{ position:absolute; left:0; top:0; height:100%; width:0; background:linear-gradient(90deg,var(--accent2),var(--accent1)); transition:width .18s linear; }
+    @media (max-width:720px){ body{ padding:14px; } .card{ padding:18px; } }
   </style>
   <link rel="preload" as="script" href="/login/login.js">
   <link rel="prefetch" href="/hr-landing/index.html" />
@@ -32,73 +63,75 @@
   <link rel="prefetch" href="/applicant-landing/index.html" />
 </head>
 <body>
-  <div class="wrap">
+  <div class="wrap" role="application">
     <header>
-      <div class="title"><h1>TalentFlow</h1><div class="muted">Sign in or create an account</div></div>
+      <div class="title">
+        <h1>TalentFlow</h1>
+        <p class="hint">Applicant Tracking System</p>
+      </div>
+      <div class="theme-control" id="themeControl" role="button" tabindex="0" aria-pressed="false" aria-label="Toggle theme">
+        <span id="themeLabel" class="muted">Dark Mode</span>
+        <div class="toggle" id="themeToggle" aria-hidden="true">
+          <svg class="icon left" viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" fill="currentColor"/></svg>
+          <div class="knob" id="themeKnob" aria-hidden="true"></div>
+          <svg class="icon right" viewBox="0 0 24 24" fill="none"><g fill="currentColor"><circle cx="12" cy="12" r="3.25"/><path d="M12 2v1.8M12 20.2V22M4.93 4.93l1.27 1.27M17.8 17.8l1.27 1.27M2 12h1.8M20.2 12H22M4.93 19.07l1.27-1.27M17.8 6.2l1.27-1.27" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></g></svg>
+        </div>
+      </div>
     </header>
 
-    <div class="card">
-      <div class="tabs">
-        <div class="tab active" id="tabLogin">Login</div>
-        <div class="tab" id="tabSignup">Sign Up</div>
+    <div class="progress-wrap" id="progressWrap"><div class="progress-bar" id="progressBar"></div></div>
+
+    <main>
+      <div class="card">
+        <div class="tabs">
+          <div class="tab active" id="tabLogin">Login</div>
+          <div class="tab" id="tabSignup">Sign Up</div>
+        </div>
+
+        <form id="loginForm">
+          <div class="field">
+            <label for="loginEmail">Email</label>
+            <input class="input" type="email" id="loginEmail" required autocomplete="username" placeholder="your@email.com" />
+          </div>
+          <div class="field">
+            <label for="loginPassword">Password</label>
+            <input class="input" type="password" id="loginPassword" required autocomplete="current-password" placeholder="••••••••" />
+          </div>
+          <button class="btn" type="submit" style="margin-top:20px;">Sign In</button>
+          <div id="loginError" class="error" role="alert"></div>
+        </form>
+
+        <form id="signupForm" style="display:none;">
+          <div class="field">
+            <label for="suName">Name</label>
+            <input class="input" id="suName" required placeholder="Your full name" />
+          </div>
+          <div class="field">
+            <label for="suEmail">Email</label>
+            <input class="input" type="email" id="suEmail" required autocomplete="email" placeholder="your@email.com" />
+          </div>
+          <div class="field">
+            <label for="suPassword">Password</label>
+            <input class="input" type="password" id="suPassword" required autocomplete="new-password" placeholder="At least 6 characters" />
+          </div>
+          <div class="field has-select">
+            <label for="suRole">Role</label>
+            <select id="suRole" required>
+              <option value="">Select your role</option>
+              <option value="hr">HR</option>
+              <option value="hiring_manager">Hiring Manager</option>
+              <option value="applicant">Applicant</option>
+            </select>
+          </div>
+
+          <button class="btn" type="submit" style="margin-top:20px;">Create Account</button>
+          <div id="signupError" class="error" role="alert"></div>
+        </form>
       </div>
-
-      <form id="loginForm">
-        <div>
-          <label>Email</label>
-          <input class="input" type="email" id="loginEmail" required autocomplete="username" />
-        </div>
-        <div style="margin-top:10px;">
-          <label>Password</label>
-          <input class="input" type="password" id="loginPassword" required autocomplete="current-password" />
-        </div>
-        <button class="btn" type="submit" style="margin-top:14px;">Login</button>
-        <div id="loginError" class="error"></div>
-      </form>
-
-      <form id="signupForm" style="display:none;">
-        <div class="row">
-          <div style="flex:1">
-            <label>Name</label>
-            <input class="input" id="suName" required />
-          </div>
-        </div>
-        <div style="margin-top:10px;" class="row">
-          <div style="flex:1">
-            <label>Email</label>
-            <input class="input" type="email" id="suEmail" required autocomplete="email" />
-          </div>
-        </div>
-        <div style="margin-top:10px;" class="row">
-          <div style="flex:1">
-            <label>Password</label>
-            <input class="input" type="password" id="suPassword" required autocomplete="new-password" />
-          </div>
-        </div>
-        <div style="margin-top:10px;">
-          <label>Role</label>
-          <select id="suRole" class="input" required>
-            <option value="hr">HR</option>
-            <option value="hiring_manager">Hiring Manager</option>
-            <option value="applicant">Applicant</option>
-          </select>
-        </div>
-
-        <button class="btn" type="submit" style="margin-top:14px;">Create Account</button>
-        <div id="signupError" class="error"></div>
-      </form>
-    </div>
+    </main>
   </div>
 
   <script src="/login/login.js"></script>
-  <script>
-    // apply theme like other pages
-    (function(){
-      const THEME_KEY = 'talentflow_theme';
-      const body = document.body;
-      function applyTheme(t){ if(t==='light') body.classList.add('theme-light'); else body.classList.remove('theme-light'); }
-      try{ applyTheme(localStorage.getItem(THEME_KEY)||'dark'); }catch(e){ applyTheme('dark'); }
-    })();
-  </script>
 </body>
 </html>
+
