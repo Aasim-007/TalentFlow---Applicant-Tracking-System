@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="https://jakarta.ee/xml/ns/jakartaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd"
+         version="6.0">
+
+  <!-- Explicitly register Jersey servlet on /api/* -->
+  <servlet>
+    <servlet-name>jersey-servlet</servlet-name>
+    <servlet-class>org.glassfish.jersey.servlet.ServletContainer</servlet-class>
+    <init-param>
+      <param-name>javax.ws.rs.Application</param-name>
+      <param-value>com.example.ats.web.AppConfig</param-value>
+    </init-param>
+    <init-param>
+      <param-name>jakarta.ws.rs.Application</param-name>
+      <param-value>com.example.ats.web.AppConfig</param-value>
+    </init-param>
+    <!-- do not eagerly load Jersey at startup; let it initialize on first /api/* request -->
+  </servlet>
+
+  <servlet-mapping>
+    <servlet-name>jersey-servlet</servlet-name>
+    <url-pattern>/api/*</url-pattern>
+  </servlet-mapping>
+
+  <!-- Register StatusServlet at /status for health checks -->
+  <servlet>
+    <servlet-name>status-servlet</servlet-name>
+    <servlet-class>com.example.ats.web.StatusServlet</servlet-class>
+    <load-on-startup>2</load-on-startup>
+  </servlet>
+
+  <servlet-mapping>
+    <servlet-name>status-servlet</servlet-name>
+    <url-pattern>/status</url-pattern>
+  </servlet-mapping>
+
+  <!-- Keep default servlet to serve static resources -->
+</web-app>

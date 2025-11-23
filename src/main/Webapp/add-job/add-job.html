@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Add Job — CV Screening</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* (existing styles kept) */
+        :root{ --bg-dark-top:#071428; --bg-dark-bottom:#0b2340; --bg-light-top:#f6f9fc; --bg-light-bottom:#e9f0f6; --card-bg-dark: rgba(255,255,255,0.02); --text-dark:#e9f3ff; --text-light:#0b1220; --muted-dark:#9aa7bb; --muted-light:#5b6b78; --accent1:#60a5fa; --accent2:#6ee7b7; --danger:#e55353; --radius:12px; --shadow:0 12px 30px rgba(2,8,23,0.16); font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial; }
+        html,body{height:100%;margin:0;padding:0}
+        body{ --text:var(--text-dark); --muted:var(--muted-dark); background:linear-gradient(180deg,var(--bg-dark-top) 0%,var(--bg-dark-bottom) 100%); background-attachment:fixed; background-size:cover; min-height:100vh; color:var(--text); padding:26px; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; box-sizing:border-box; transition:background .22s ease,color .18s ease; line-height:1.35; }
+        body.theme-light{ --text:var(--text-light); --muted:var(--muted-light); background:linear-gradient(180deg,var(--bg-light-top) 0%,var(--bg-light-bottom) 100%); background-attachment:fixed!important; background-size:cover!important; min-height:100vh!important; }
+        /* NEW: help native controls adopt dark palette */
+        body:not(.theme-light){ color-scheme: dark; }
+        *{box-sizing:border-box}
+        .wrap{ max-width:980px; margin:0 auto; }
+        header{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px; }
+        .title{ display:flex; flex-direction:column; gap:4px; }
+        .title h1{ margin:0; font-size:18px; font-weight:600; }
+        .hint{margin:0;color:var(--muted);font-size:13px}
+        .card{ background:color-mix(in srgb,var(--text) 3%,transparent); border-radius:var(--radius); padding:16px; margin-bottom:14px; box-shadow:var(--shadow); border:1px solid rgba(0,0,0,0.03); }
+        label.small{ display:block; font-size:13px; color:var(--muted); margin:0; }
+        .field{ display:flex; flex-direction:column; gap:8px; position:relative; }
+        .input, textarea{ width:100%; padding:12px 14px; border-radius:10px; border:1px solid rgba(0,0,0,0.06); font-size:14px; resize:vertical; min-height:48px; line-height:1.25; background:transparent; color:var(--text); }
+        /* UPDATED select styles for better dark-mode readability */
+        select.input{ appearance:none; -webkit-appearance:none; -moz-appearance:none; padding:12px 14px; padding-right:36px; border-radius:10px; font-size:14px; line-height:1.25; cursor:pointer; border:1px solid rgba(255,255,255,0.15); background:#10243d; color:var(--text-dark); }
+        body.theme-light select.input{ background:#ffffff; border:1px solid rgba(0,0,0,0.12); color:var(--text-light); }
+        /* Option popup backgrounds with border radius */
+        body:not(.theme-light) select.input option{ background:#0d1c31; color:var(--text-dark); border-radius:6px; padding:8px; }
+        body.theme-light select.input option{ background:#ffffff; color:var(--text-light); border-radius:6px; padding:8px; }
+        select.input:focus{ outline:none; box-shadow:0 0 0 2px rgba(96,165,250,0.35); }
+        .field.has-select{ --label-h:16px; --gap-h:8px; --input-h:48px; }
+        .field.has-select::after{ content:''; position:absolute; right:14px; top:calc(var(--label-h) + var(--gap-h) + (var(--input-h) / 2)); transform:translateY(-50%); width:0; height:0; border-left:6px solid transparent; border-right:6px solid transparent; border-top:8px solid var(--muted); pointer-events:none; }
+        input[type="datetime-local"].input{ -webkit-appearance:textfield; appearance:textfield; padding-right:40px; background-image:none!important; }
+        .field.has-calendar{ --label-h:16px; --gap-h:8px; --input-h:48px; }
+        .field.has-calendar::after{ content:''; position:absolute; right:12px; top:calc(var(--label-h) + var(--gap-h) + (var(--input-h) / 2)); transform:translateY(-50%); width:20px; height:20px; background-repeat:no-repeat; background-size:20px 20px; pointer-events:none; opacity:.95; z-index:2; }
+        .calendar-trigger{ position:absolute; right:6px; top:50%; transform:translateY(-50%); width:32px; height:32px; border:0; background:transparent; padding:0; margin:0; z-index:3; cursor:pointer; }
+        .calendar-trigger:focus{ outline:none; }
+        body:not(.theme-light) .field.has-calendar::after{ background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path stroke="%23e9f3ff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none" d="M7 11h10M7 16h10M7 6h10M8 3v3M16 3v3M5 21h14a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v13a1 1 0 0 0 1 1z"/></svg>'); }
+        body.theme-light .field.has-calendar::after{ background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path stroke="%230b1220" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none" d="M7 11h10M7 16h10M7 6h10M8 3v3M16 3v3M5 21h14a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v13a1 1 0 0 0 1 1z"/></svg>'); }
+        input[type="datetime-local"].input::-webkit-calendar-picker-indicator{ opacity:0; width:20px; height:20px; }
+        input[type="datetime-local"].input::-webkit-clear-button,input[type="datetime-local"].input::-webkit-inner-spin-button{ display:none; }
+        input[type="datetime-local"].input::-ms-clear,input[type="datetime-local"].input::-ms-expand{ display:none; }
+        .controls-top{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; justify-content:space-between; }
+        .btn{ padding:10px 14px; border-radius:10px; border:0; background:linear-gradient(90deg,var(--accent2),var(--accent1)); color:#022027; font-weight:700; cursor:pointer; box-shadow:0 8px 22px rgba(2,8,23,0.10); }
+        .ghost{ padding:9px 12px; background:transparent; color:var(--muted); border:1px solid rgba(0,0,0,0.06); border-radius:10px; cursor:pointer; }
+        .jd-list{ display:flex; flex-direction:column; gap:14px; margin-top:14px; }
+        .jd{ background:rgba(255,255,255,0.02); border-radius:10px; padding:12px; border:1px solid rgba(0,0,0,0.04); display:grid; grid-template-columns:1fr 1fr 140px; gap:12px; align-items:start; min-width:0; }
+        .jd .controls{ grid-column:1 / -1; display:flex; gap:8px; justify-content:flex-end; margin-top:8px; }
+        .status{ font-size:13px; color:var(--muted); margin-top:8px; }
+        .progress-wrap{ position:relative; height:6px; background:rgba(0,0,0,0.05); border-radius:999px; overflow:hidden; margin-bottom:12px; display:none; }
+        .progress-bar{ position:absolute; left:0; top:0; height:100%; width:0; background:linear-gradient(90deg,var(--accent2),var(--accent1)); transition:width .18s linear; }
+        .error-box{ display:none; margin-top:12px; border-radius:10px; padding:12px 14px; background:linear-gradient(180deg,rgba(229,83,83,0.09),rgba(229,83,83,0.06)); border:1px solid rgba(229,83,83,0.18); color:var(--danger); font-weight:600; font-size:14px; box-shadow:0 6px 20px rgba(229,83,83,0.03); line-height:1.45; }
+        .error-box ul{ margin:0; padding-left:18px; }
+        .error-box li{ margin:6px 0; list-style:disc; font-weight:600; color:var(--danger); font-size:14px; }
+        .theme-control{ display:flex; align-items:center; gap:10px; cursor:pointer; user-select:none; }
+        .toggle{ --w:56px; --h:30px; width:var(--w); height:var(--h); border-radius:999px; background:rgba(255,255,255,0.06); display:inline-block; position:relative; padding:0; transition:background .18s ease; }
+        .toggle .knob{ position:absolute; top:50%; left:4px; width:22px; height:22px; border-radius:50%; background:#fff; box-shadow:0 6px 16px rgba(2,8,23,0.22); transform:translateY(-50%); transition:left .22s ease, background .22s ease, box-shadow .22s ease; }
+        body.theme-light .toggle{ background:rgba(0,0,0,0.08); }
+        body.theme-light .toggle .knob{ left:calc(100% - 4px - 22px); background:#111827; }
+        .toggle .icon{ width:16px; height:16px; opacity:.85; position:absolute; top:50%; transform:translateY(-50%); pointer-events:none; }
+        .toggle .left{ left:10px; }
+        .toggle .right{ right:10px; }
+        @media (max-width:720px){ body{ padding:14px; } .card{ padding:12px; } .jd{ grid-template-columns:1fr; } .jd .controls{ justify-content:flex-start; } }
+        .muted{ color:var(--muted); font-size:13px; }
+        .sr-only{ position:absolute; left:-9999px; top:auto; width:1px; height:1px; overflow:hidden; }
+
+        /* Fallback popup styles */
+        .dt-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.55); display:flex; align-items:center; justify-content:center; z-index:1000; padding:20px; }
+        .dt-popup{ background:color-mix(in srgb,var(--text) 6%,transparent); backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:18px; width:300px; box-shadow:0 14px 40px rgba(2,8,23,0.35); display:flex; flex-direction:column; gap:14px; }
+        body.theme-light .dt-popup{ background:color-mix(in srgb,var(--text) 92%,transparent); border:1px solid rgba(0,0,0,0.08); }
+        .dt-popup h3{ margin:0; font-size:16px; font-weight:600; }
+        .dt-row{ display:flex; flex-direction:column; gap:6px; }
+        .dt-popup input[type="date"], .dt-popup input[type="time"]{ padding:10px 12px; border-radius:8px; border:1px solid rgba(0,0,0,0.15); font-size:14px; background:transparent; color:var(--text); }
+        body.theme-light .dt-popup input[type="date"], body.theme-light .dt-popup input[type="time"]{ border:1px solid rgba(0,0,0,0.25); }
+        .dt-actions{ display:flex; gap:10px; justify-content:flex-end; }
+        .dt-actions button{ padding:8px 14px; border-radius:8px; border:0; cursor:pointer; font-weight:600; font-size:14px; }
+        .dt-actions .confirm{ background:linear-gradient(90deg,var(--accent2),var(--accent1)); color:#022027; }
+        .dt-actions .cancel{ background:transparent; color:var(--muted); border:1px solid rgba(0,0,0,0.15); }
+    </style>
+</head>
+<body>
+<div class="wrap" role="application">
+    <header>
+        <div class="title">
+            <h1>Add Job</h1>
+            <p class="hint">Create a job with weighted Job Descriptions</p>
+        </div>
+        <div class="theme-control" id="themeControl" role="button" tabindex="0" aria-pressed="false" aria-label="Toggle theme">
+            <span id="themeLabel" class="muted">Dark Mode</span>
+            <div class="toggle" id="themeToggle" aria-hidden="true">
+                <svg class="icon left" viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" fill="currentColor"/></svg>
+                <div class="knob" id="themeKnob" aria-hidden="true"></div>
+                <svg class="icon right" viewBox="0 0 24 24" fill="none"><g fill="currentColor"><circle cx="12" cy="12" r="3.25"/><path d="M12 2v1.8M12 20.2V22M4.93 4.93l1.27 1.27M17.8 17.8l1.27 1.27M2 12h1.8M20.2 12H22M4.93 19.07l1.27-1.27M17.8 6.2l1.27-1.27" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></g></svg>
+            </div>
+        </div>
+    </header>
+
+    <div class="progress-wrap" id="progressWrap"><div class="progress-bar" id="progressBar"></div></div>
+
+    <main id="mainContent">
+        <section class="card" id="formCard">
+            <div class="field">
+                <label class="small">Job Title</label>
+                <input id="jobTitle" class="input" placeholder="e.g. Senior Backend Engineer" autocomplete="off" />
+            </div>
+            <div class="field" style="margin-top:10px;">
+                <label class="small">Department</label>
+                <input id="department" class="input" placeholder="e.g. Engineering" />
+            </div>
+            <div class="field" style="margin-top:10px;">
+                <label class="small">Location</label>
+                <input id="location" class="input" placeholder="e.g. Remote / London" />
+            </div>
+            <div style="display:flex;gap:8px;margin-top:10px">
+                <div style="flex:1" class="field has-select">
+                    <label class="small">Employment Type</label>
+                    <select id="employmentType" class="input"></select>
+                </div>
+                <div style="width:140px" class="field">
+                    <label class="small">Salary Min</label>
+                    <input id="salaryMin" class="input" type="number" step="0.01" />
+                </div>
+                <div style="width:140px" class="field">
+                    <label class="small">Salary Max</label>
+                    <input id="salaryMax" class="input" type="number" step="0.01" />
+                </div>
+            </div>
+            <div class="field has-calendar" style="margin-top:10px;">
+                <label class="small">Application Deadline</label>
+                <input id="applicationDeadline" class="input" type="datetime-local" />
+                <button type="button" class="calendar-trigger" aria-label="Open date time picker"></button>
+            </div>
+            <div class="field" style="margin-top:10px;">
+                <label class="small">Description Summary</label>
+                <textarea id="descriptionSummary" class="input" rows="3" placeholder="Short summary of the role"></textarea>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:10px">
+                <div style="flex:1" class="field has-select">
+                    <label class="small">Status</label>
+                    <select id="jobStatus" class="input"></select>
+                </div>
+                <div style="flex:1" class="field has-select">
+                    <label class="small">Manager</label>
+                    <select id="managerSelect" class="input"></select>
+                </div>
+            </div>
+        </section>
+
+        <section class="card" aria-labelledby="jdHeading">
+            <div class="controls-top" style="align-items:flex-start">
+                <div class="left">
+                    <label class="small" id="jdHeading">Job Descriptions (JDs)</label>
+                    <div class="hint">Each JD includes Title, Description, and Weight (0–10).</div>
+                </div>
+                <div class="right">
+                    <button id="addJD" class="btn" title="Add Job Description">+ Add JD</button>
+                </div>
+            </div>
+            <div id="jdList" class="jd-list" aria-live="polite" style="margin-top:14px"></div>
+        </section>
+
+        <section class="card">
+            <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center">
+                <button id="saveBtn" class="btn">Save Job</button>
+                <button id="clearBtn" class="ghost">Clear Form</button>
+                <div id="status" class="status" aria-live="polite"></div>
+            </div>
+            <div id="errorList" class="error-box" role="alert"></div>
+        </section>
+    </main>
+</div>
+<script src="add-job.js"></script>
+</body>
+</html>
