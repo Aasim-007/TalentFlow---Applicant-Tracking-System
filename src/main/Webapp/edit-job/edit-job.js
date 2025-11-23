@@ -1,14 +1,11 @@
-/* Keep uploaded path (not shown) */
+/* Edit Job Script */
 const LOGO_PATH = '/mnt/data/768cd4e5-99cb-4c49-8d26-101d01b8b283.png';
 
-/* EDIT_WORKFLOW_URL: set this to the URL of your edit workflow where user should be redirected.
-Example: https://your-n8n-host/webhook/edit-job-workflow
-The final redirect will be: EDIT_WORKFLOW_URL?JobID=101
-*/
-const EDIT_WORKFLOW_URL = '/add-job/edit';
+/* Update endpoint for editing jobs */
+const UPDATE_JOB_URL = '/api/jobs/update';
 
-/* Replace with your n8n POST webhook that saves the job */
-const HARDCODED_WEBHOOK_URL = '/api/jobs/create';
+// Job ID from URL parameter
+let CURRENT_JOB_ID = null;
 
 // Global function for copying form link
 window.copyFormLink = function() {
@@ -86,6 +83,124 @@ document.addEventListener('DOMContentLoaded', () => {
     function toggleTheme(){ const cur = body.classList.contains('theme-light') ? 'light' : 'dark'; const next = cur === 'light' ? 'dark' : 'light'; applyTheme(next); try{ localStorage.setItem(THEME_KEY, next); } catch(e){} }
     if(themeControl) themeControl.addEventListener('click', toggleTheme);
     if(themeControl) themeControl.addEventListener('keydown', (e)=> { if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleTheme(); } });
+
+    // Get job ID from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    CURRENT_JOB_ID = urlParams.get('jobId');
+
+    console.log('Edit Job Page - Job ID from URL:', CURRENT_JOB_ID);
+
+    if (!CURRENT_JOB_ID) {
+        console.error('No job ID provided in URL');
+        const loadingScreen = document.getElementById('loadingScreen');
+        if (loadingScreen) loadingScreen.style.display = 'none';
+        if (mainContent) {
+            mainContent.style.display = 'block';
+            mainContent.innerHTML = `
+                <section class="card" style="text-align:center;padding:60px 20px;">
+                    <div style="font-size:64px;margin-bottom:20px;">⚠️</div>
+                    <h2 style="margin:0 0 12px 0;color:var(--danger);">Invalid URL</h2>
+                    <p class="muted">Missing job ID in URL. Please provide ?jobId=X</p>
+                    <button onclick="window.location.href='/index.html'" class="btn" style="margin-top:20px;">← Back to Dashboard</button>
+                </section>
+            `;
+        }
+        return;
+    }
+
+    // Load existing job data
+    async function loadJobData() {
+        console.log('loadJobData() called for job ID:', CURRENT_JOB_ID);
+        try {
+            // Show loading screen
+            const loadingScreen = document.getElementById('loadingScreen');
+            if (loadingScreen) loadingScreen.style.display = 'block';
+            if (mainContent) mainContent.style.display = 'none';
+
+            console.log('Fetching job from:', `/api/jobs/${CURRENT_JOB_ID}`);
+            const response = await fetch(`/api/jobs/${CURRENT_JOB_ID}`);
+            console.log('Response status:', response.status);
+
+            const data = await response.json();
+            console.log('Response data:', data);
+
+            if (data.status === 'error') {
+                console.error('Server returned error:', data.reason);
+                hideLoadingShowError('Failed to load job: ' + (data.reason || 'Unknown error'));
+                return;
+            }
+
+            // Check if job can be edited (only draft jobs)
+            const jobStatus = data.status ? data.status.toLowerCase() : '';
+            if (jobStatus === 'published' || jobStatus === 'closed') {
+                hideLoadingShowError(
+                    `This job is ${jobStatus} and cannot be edited. Only draft jobs can be modified.`,
+                    'Job Cannot Be Edited',
+                    true
+                );
+                return;
+            }
+
+            // Hide loading screen and show form
+            if (loadingScreen) loadingScreen.style.display = 'none';
+            if (mainContent) mainContent.style.display = 'block';
+
+            // Populate form fields
+            if(jobTitleEl) jobTitleEl.value = data.title || '';
+            if(departmentEl) departmentEl.value = data.department || '';
+            if(locationEl) locationEl.value = data.location || '';
+            if(employmentTypeEl && data.employmentType) employmentTypeEl.value = data.employmentType;
+            if(salaryMinEl) salaryMinEl.value = data.salaryMin || '';
+            if(salaryMaxEl) salaryMaxEl.value = data.salaryMax || '';
+            if(applicationDeadlineEl && data.applicationDeadline) {
+                // Convert ISO string to datetime-local format
+                const dt = new Date(data.applicationDeadline);
+                const year = dt.getFullYear();
+                const month = String(dt.getMonth() + 1).padStart(2, '0');
+                const day = String(dt.getDate()).padStart(2, '0');
+                const hours = String(dt.getHours()).padStart(2, '0');
+                const minutes = String(dt.getMinutes()).padStart(2, '0');
+                applicationDeadlineEl.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+            }
+            if(descriptionSummaryEl) descriptionSummaryEl.value = data.descriptionSummary || '';
+            if(jobStatusEl && data.status) jobStatusEl.value = data.status;
+            if(managerSelectEl && data.managedByManagerId) managerSelectEl.value = data.managedByManagerId;
+
+            // Load JDs
+            if(jdList) jdList.innerHTML = '';
+            if(data.jobDescriptions && data.jobDescriptions.length > 0) {
+                data.jobDescriptions.forEach(jd => {
+                    addNewJD({ title: jd.title, description: jd.description, weight: jd.weightage }, true);
+                });
+            } else {
+                addNewJD({}, true);
+            }
+
+            // Update page hint
+            const pageHint = document.getElementById('pageHint');
+            if(pageHint) pageHint.textContent = 'Edit job details and descriptions';
+
+        } catch (error) {
+            hideLoadingShowError('Error loading job: ' + error.message);
+        }
+    }
+
+    function hideLoadingShowError(message, title = 'Error Loading Job', showBackButton = true) {
+        const loadingScreen = document.getElementById('loadingScreen');
+        if (loadingScreen) loadingScreen.style.display = 'none';
+
+        if (mainContent) {
+            mainContent.style.display = 'block';
+            mainContent.innerHTML = `
+                <section class="card" style="text-align:center;padding:60px 20px;">
+                    <div style="font-size:64px;margin-bottom:20px;">⚠️</div>
+                    <h2 style="margin:0 0 12px 0;color:var(--danger);font-size:18px;font-weight:600;">${escapeHtml(title)}</h2>
+                    <p class="muted" style="margin:0 0 20px 0;max-width:500px;margin-left:auto;margin-right:auto;">${escapeHtml(message)}</p>
+                    ${showBackButton ? '<button onclick="window.location.href=\'/index.html\'" class="btn" style="margin-top:20px;">← Back to Dashboard</button>' : ''}
+                </section>
+            `;
+        }
+    }
 
     // JD management
     let jdCounter = 0;
@@ -214,7 +329,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     function clearErrors(){ if(errorListEl){ errorListEl.style.display='none'; errorListEl.innerHTML=''; } }
 
-    // send
+    // send - updated for edit mode
     async function sendToWebhook(){
         clearErrors();
         statusEl.textContent = '';
@@ -222,16 +337,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const validation = validatePayload(payload);
         if(validation.length){ showErrors(validation, true); statusEl.textContent = 'Validation error'; return; }
 
-        if(!HARDCODED_WEBHOOK_URL || HARDCODED_WEBHOOK_URL.includes('YOUR_N8N_WEBHOOK_URL_HERE')){
-            showErrors(['HARDCODED_WEBHOOK_URL is not set. Edit the HTML and update the webhook URL.']);
-            return;
-        }
+        // Add JobID to payload for update
+        payload.JobID = CURRENT_JOB_ID;
 
         showProgress();
-        if(saveBtn){ saveBtn.disabled = true; saveBtn.textContent = 'Saving...' }
+        if(saveBtn){ saveBtn.disabled = true; saveBtn.textContent = 'Updating...' }
 
         try {
-            const res = await fetch(HARDCODED_WEBHOOK_URL, {
+            const res = await fetch(UPDATE_JOB_URL, {
                 method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(payload)
             });
 
@@ -242,16 +355,16 @@ document.addEventListener('DOMContentLoaded', () => {
             // If server returned non-2xx, show reason if present
             if(!res.ok){
                 const serverMsg = (data && (data.reason || data.error || data.message)) ? (data.reason||data.error||data.message) : (res.statusText || ('Status ' + res.status));
-                showErrors([`Webhook returned ${res.status}: ${serverMsg}`]);
-                statusEl.textContent = 'Save failed';
+                showErrors([`Update failed ${res.status}: ${serverMsg}`]);
+                statusEl.textContent = 'Update failed';
                 return;
             }
 
-            // At this point res.ok. But we must check the returned JSON "status" property:
+            // At this point res.ok. Check the returned JSON "status" property:
             if(!data){
-                // 2xx but no JSON - treat as unknown success; can't get JobID
+                // 2xx but no JSON - treat as success
                 setProgressDone();
-                showSavedView(payload, null, null);
+                showUpdateSuccess(payload);
                 return;
             }
 
@@ -260,29 +373,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 // show the server-provided reason
                 const reason = data.reason || data.message || 'Unknown server error';
                 showErrors([reason]);
-                statusEl.textContent = 'Save failed';
+                statusEl.textContent = 'Update failed';
                 return;
             }
             if(lowerStatus === 'success'){
-                // success — require JobID to enable Edit redirect
-                const jobId = data.jobId !== undefined ? data.jobId : (data.JobID !== undefined ? data.JobID : null);
-                const formLink = data.formLink || null;
-                // show saved view only for explicit success
+                // success
                 setProgressDone();
-                showSavedView(payload, jobId, formLink);
+                showUpdateSuccess(payload);
                 return;
             }
 
-            // If we get here: 2xx but status not provided — be conservative: show error
-            showErrors([ 'Webhook returned unexpected response. Expected { "status": "success" | "error", ... }' ]);
-            statusEl.textContent = 'Save failed';
+            // If we get here: 2xx but status not provided — show error
+            showErrors(['Update completed but server response was unclear. Please refresh to verify.']);
+            statusEl.textContent = 'Update status unclear';
             return;
 
         } catch (err) {
             showErrors([`Network error: ${err.message || err}`]);
-            statusEl.textContent = 'Save failed';
+            statusEl.textContent = 'Update failed';
         } finally {
-            if(saveBtn){ saveBtn.disabled = false; saveBtn.textContent = 'Save Job' }
+            if(saveBtn){ saveBtn.disabled = false; saveBtn.textContent = 'Update Job' }
             setTimeout(()=> hideProgressInstant(), 800);
         }
     }
@@ -378,27 +488,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function escapeHtml(s){ return String(s).replace(/[&<>\"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
+    // Show update success message
+    function showUpdateSuccess(payload) {
+        document.getElementById('mainContent').innerHTML = `
+            <section class="card" style="text-align:center;padding:40px 20px;">
+                <div style="font-size:64px;margin-bottom:16px;">✓</div>
+                <h2 style="margin:0 0 12px 0;color:var(--success);">Job Updated Successfully!</h2>
+                <p class="muted" style="margin:0 0 20px 0;">Your changes have been saved.</p>
+                <div style="display:flex;gap:12px;justify-content:center;margin-top:24px;">
+                    <button onclick="window.location.href='/index.html'" class="btn">← Back to Dashboard</button>
+                    <button onclick="window.location.reload()" class="ghost">Edit Again</button>
+                </div>
+            </section>
+        `;
+    }
+
     // bindings
     if(addJDBtn) addJDBtn.addEventListener('click', ()=> addNewJD());
     if(saveBtn) saveBtn.addEventListener('click', ()=> sendToWebhook());
-    if(clearBtn) clearBtn.addEventListener('click', ()=> {
-        if(confirm('Clear the form? This will remove all data.')) {
-            // Clear all input fields
-            if(jobTitleEl) jobTitleEl.value='';
-            if(departmentEl) departmentEl.value='';
-            if(locationEl) locationEl.value='';
-            if(employmentTypeEl) employmentTypeEl.value='';
-            if(salaryMinEl) salaryMinEl.value='';
-            if(salaryMaxEl) salaryMaxEl.value='';
-            if(applicationDeadlineEl) applicationDeadlineEl.value='';
-            if(descriptionSummaryEl) descriptionSummaryEl.value='';
-            if(jobStatusEl) jobStatusEl.value='';
-            if(managerSelectEl) managerSelectEl.value='';
-            if(jdList) jdList.innerHTML='';
-            clearErrors();
-            if(statusEl) statusEl.textContent='';
-            // Add one empty JD
-            addNewJD();
+
+    // Cancel button - go back to dashboard
+    const cancelBtn = document.getElementById('cancelBtn');
+    if(cancelBtn) cancelBtn.addEventListener('click', ()=> {
+        if(confirm('Cancel editing? Any unsaved changes will be lost.')) {
+            window.location.href = '/index.html';
         }
     });
 
@@ -434,11 +547,23 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch(e){ console.warn('Failed to fetch options', e); }
     }
 
-    fetchOptions();
+    // Fetch options and then load job data
+    (async function init() {
+        console.log('Initializing edit-job page...');
+        try {
+            console.log('Fetching dropdown options...');
+            await fetchOptions();
+            console.log('Options fetched, now loading job data...');
+            await loadJobData();
+            console.log('Job data loaded successfully');
+        } catch (error) {
+            console.error('Initialization error:', error);
+            hideLoadingShowError('Failed to load page: ' + error.message);
+        }
+    })();
+
     document.addEventListener('keydown', (e)=> { if((e.ctrlKey||e.metaKey) && e.key === 'Enter') sendToWebhook(); });
 
-    // Add one empty JD by default (without scrolling)
-    addNewJD({}, true);
 
     // Make the visible calendar icon interactive: forward clicks on the wrapper to the input
     (function wireCalendarClick(){

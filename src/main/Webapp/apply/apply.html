@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Apply for Job — TalentFlow</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root{ --bg-dark-top:#071428; --bg-dark-bottom:#0b2340; --bg-light-top:#f6f9fc; --bg-light-bottom:#e9f0f6; --text-dark:#e9f3ff; --text-light:#0b1220; --muted-dark:#9aa7bb; --muted-light:#5b6b78; --accent1:#60a5fa; --accent2:#6ee7b7; --danger:#e55353; --success:#10b981; --radius:12px; --shadow:0 12px 30px rgba(2,8,23,0.16); font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial; }
+        html,body{height:100%;margin:0;padding:0}
+        body{ --text:var(--text-dark); --muted:var(--muted-dark); background:linear-gradient(180deg,var(--bg-dark-top) 0%,var(--bg-dark-bottom) 100%); background-attachment:fixed; background-size:cover; min-height:100vh; color:var(--text); padding:26px; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; box-sizing:border-box; transition:background .22s ease,color .18s ease; line-height:1.35; }
+        body.theme-light{ --text:var(--text-light); --muted:var(--muted-light); background:linear-gradient(180deg,var(--bg-light-top) 0%,var(--bg-light-bottom) 100%); background-attachment:fixed!important; background-size:cover!important; min-height:100vh!important; }
+        body:not(.theme-light){ color-scheme: dark; }
+        *{box-sizing:border-box}
+        .wrap{ max-width:980px; margin:0 auto; }
+        header{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px; }
+        .title{ display:flex; flex-direction:column; gap:4px; }
+        .title h1{ margin:0; font-size:18px; font-weight:600; }
+        .hint{margin:0;color:var(--muted);font-size:13px}
+        .card{ background:color-mix(in srgb,var(--text) 3%,transparent); border-radius:var(--radius); padding:16px; margin-bottom:14px; box-shadow:var(--shadow); border:1px solid rgba(0,0,0,0.03); }
+        label.small{ display:block; font-size:13px; color:var(--muted); margin:0; }
+        .field{ display:flex; flex-direction:column; gap:8px; position:relative; }
+        .input, textarea{ width:100%; padding:12px 14px; border-radius:10px; border:1px solid rgba(0,0,0,0.06); font-size:14px; resize:vertical; min-height:48px; line-height:1.25; background:transparent; color:var(--text); }
+        .btn{ padding:10px 14px; border-radius:10px; border:0; background:linear-gradient(90deg,var(--accent2),var(--accent1)); color:#022027; font-weight:700; cursor:pointer; box-shadow:0 8px 22px rgba(2,8,23,0.10); }
+        .btn:disabled{ opacity:0.5; cursor:not-allowed; }
+        .status{ font-size:13px; color:var(--muted); margin-top:8px; }
+        .success{ color:var(--success); font-weight:700; }
+        .error-box{ display:none; margin-top:12px; border-radius:10px; padding:12px 14px; background:linear-gradient(180deg,rgba(229,83,83,0.09),rgba(229,83,83,0.06)); border:1px solid rgba(229,83,83,0.18); color:var(--danger); font-weight:600; font-size:14px; box-shadow:0 6px 20px rgba(229,83,83,0.03); line-height:1.45; }
+        .progress-wrap{ position:relative; height:6px; background:rgba(0,0,0,0.05); border-radius:999px; overflow:hidden; margin-bottom:12px; display:none; }
+        .progress-bar{ position:absolute; left:0; top:0; height:100%; width:0; background:linear-gradient(90px,var(--accent2),var(--accent1)); transition:width .18s linear; }
+        .theme-control{ display:flex; align-items:center; gap:10px; cursor:pointer; user-select:none; }
+        .toggle{ --w:56px; --h:30px; width:var(--w); height:var(--h); border-radius:999px; background:rgba(255,255,255,0.06); display:inline-block; position:relative; padding:0; transition:background .18s ease; }
+        .toggle .knob{ position:absolute; top:50%; left:4px; width:22px; height:22px; border-radius:50%; background:#fff; box-shadow:0 6px 16px rgba(2,8,23,0.22); transform:translateY(-50%); transition:left .22s ease, background .22s ease; }
+        body.theme-light .toggle{ background:rgba(0,0,0,0.08); }
+        body.theme-light .toggle .knob{ left:calc(100% - 4px - 22px); background:#111827; }
+        .toggle .icon{ width:16px; height:16px; opacity:.85; position:absolute; top:50%; transform:translateY(-50%); pointer-events:none; }
+        .toggle .left{ left:10px; }
+        .toggle .right{ right:10px; }
+        .job-detail{ display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; margin-bottom:18px; }
+        .detail-item{ background:rgba(255,255,255,0.02); padding:10px 12px; border-radius:8px; border:1px solid rgba(0,0,0,0.04); }
+        .detail-label{ font-size:11px; text-transform:uppercase; letter-spacing:.5px; color:var(--muted); margin-bottom:4px; }
+        .detail-value{ font-weight:600; font-size:14px; }
+        .upload-area{ border:2px dashed rgba(96,165,250,0.3); border-radius:10px; padding:30px; text-align:center; cursor:pointer; transition:all .22s ease; position:relative; }
+        .upload-area:hover{ border-color:rgba(96,165,250,0.6); background:rgba(96,165,250,0.05); }
+        .upload-area.dragover{ border-color:var(--accent1); background:rgba(96,165,250,0.1); }
+        .upload-icon{ font-size:48px; margin-bottom:12px; opacity:.7; }
+        .file-input{ display:none; }
+        .file-name{ margin-top:12px; font-weight:600; color:var(--accent1); }
+        @media (max-width:720px){ body{ padding:14px; } .card{ padding:12px; } }
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <header>
+        <div class="title">
+            <h1>Apply for Position</h1>
+            <p class="hint" id="jobTitleHint">Loading job details...</p>
+        </div>
+        <div class="theme-control" id="themeControl" role="button" tabindex="0">
+            <span id="themeLabel" class="muted">Dark Mode</span>
+            <div class="toggle">
+                <svg class="icon left" viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" fill="currentColor"/></svg>
+                <div class="knob"></div>
+                <svg class="icon right" viewBox="0 0 24 24" fill="none"><g fill="currentColor"><circle cx="12" cy="12" r="3.25"/><path d="M12 2v1.8M12 20.2V22M4.93 4.93l1.27 1.27M17.8 17.8l1.27 1.27M2 12h1.8M20.2 12H22M4.93 19.07l1.27-1.27M17.8 6.2l1.27-1.27" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></g></svg>
+            </div>
+        </div>
+    </header>
+
+    <div class="progress-wrap" id="progressWrap"><div class="progress-bar" id="progressBar"></div></div>
+
+    <main id="mainContent">
+        <section class="card" id="jobDetailsCard" style="display:none;">
+            <h3 style="margin:0 0 12px 0;font-size:16px;font-weight:600;">Job Details</h3>
+            <div class="job-detail" id="jobDetails"></div>
+            <div style="margin-top:12px;">
+                <label class="small">Description</label>
+                <div id="jobDescription" style="margin-top:6px;line-height:1.6;"></div>
+            </div>
+        </section>
+
+        <section class="card" id="applicationFormCard" style="display:none;">
+            <h3 style="margin:0 0 12px 0;font-size:16px;font-weight:600;">Your Application</h3>
+            <form id="applicationForm" enctype="multipart/form-data">
+                <div class="field" style="margin-bottom:10px;">
+                    <label class="small">Full Name *</label>
+                    <input type="text" name="applicantName" class="input" required />
+                </div>
+                <div class="field" style="margin-bottom:10px;">
+                    <label class="small">Email Address *</label>
+                    <input type="email" name="applicantEmail" class="input" required />
+                </div>
+                <div class="field" style="margin-bottom:10px;">
+                    <label class="small">Phone Number</label>
+                    <input type="tel" name="applicantPhone" class="input" />
+                </div>
+                <div class="field" style="margin-bottom:10px;">
+                    <label class="small">Upload CV/Resume *</label>
+                    <div class="upload-area" id="uploadArea">
+                        <div class="upload-icon">📄</div>
+                        <div style="font-weight:600;margin-bottom:6px;">Click to upload or drag and drop</div>
+                        <div class="muted" style="font-size:12px;">PDF, DOC, DOCX (Max 10MB)</div>
+                        <div class="file-name" id="fileName" style="display:none;"></div>
+                    </div>
+                    <input type="file" name="cv" id="cvInput" class="file-input" accept=".pdf,.doc,.docx" required />
+                </div>
+                <div class="field" style="margin-bottom:10px;">
+                    <label class="small">Cover Letter (Optional)</label>
+                    <textarea name="coverLetter" class="input" rows="4" placeholder="Tell us why you're a great fit for this role..."></textarea>
+                </div>
+                <div style="display:flex;gap:8px;align-items:center;margin-top:16px;">
+                    <button type="submit" id="submitBtn" class="btn">Submit Application</button>
+                    <div id="status" class="status"></div>
+                </div>
+                <div id="errorBox" class="error-box"></div>
+            </form>
+        </section>
+    </main>
+</div>
+<script src="apply.js"></script>
+</body>
+</html>
+

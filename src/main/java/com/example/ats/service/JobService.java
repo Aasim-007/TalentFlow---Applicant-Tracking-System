@@ -45,10 +45,56 @@ public class JobService {
         Long id = jobRepo.nextId();
         job.setId(id);
 
-        // generate form link: /form/<id>-<slugified-title>
-        String slug = req.getJob_title() == null ? "job" : req.getJob_title().toLowerCase().replaceAll("[^a-z0-9]+","-").replaceAll("(^-|-$)","");
-        job.setFormLink("/form/" + id + "-" + slug);
+        // Generate form link to application page
+        job.setFormLink("/apply/apply.html?jobId=" + id);
 
         return jobRepo.save(job);
+    }
+
+    public Job updateFromDto(JobCreateRequest req){
+        // Get JobID from request
+        Long jobId = req.getJobID();
+        if (jobId == null) {
+            throw new IllegalArgumentException("JobID is required for update");
+        }
+
+        // Fetch existing job
+        Job job = jobRepo.findById(jobId)
+                .orElseThrow(() -> new IllegalArgumentException("Job not found with ID: " + jobId));
+
+        // Update job fields
+        job.setTitle(req.getJob_title());
+        job.setDepartment(req.getDepartment());
+        job.setLocation(req.getLocation());
+        if (req.getEmployment_type() != null) {
+            job.setEmploymentType(com.example.ats.entity.EmploymentType.fromDb(req.getEmployment_type()));
+        }
+        job.setSalaryMin(req.getSalary_min());
+        job.setSalaryMax(req.getSalary_max());
+        if (req.getApplication_deadline() != null){
+            job.setApplicationDeadline(java.time.OffsetDateTime.parse(req.getApplication_deadline()));
+        }
+        job.setDescriptionSummary(req.getDescription_summary());
+        if (req.getStatus() != null) {
+            job.setStatus(com.example.ats.entity.JobStatus.fromDb(req.getStatus()));
+        }
+        job.setManagedByManagerId(req.getManaged_by_manager_id());
+        job.setUpdatedAt(java.time.OffsetDateTime.now());
+
+        // Delete existing JDs and add new ones
+        job.getJds().clear();
+
+        if(req.getJds() != null){
+            List<JobDescription> jdList = req.getJds().stream()
+                    .map(jd -> new JobDescription(jd.title, jd.description, jd.weight))
+                    .collect(Collectors.toList());
+            // attach to job with back-reference
+            for (JobDescription jd : jdList){
+                jd.setJob(job);
+                job.getJds().add(jd);
+            }
+        }
+
+        return jobRepo.update(job);
     }
 }

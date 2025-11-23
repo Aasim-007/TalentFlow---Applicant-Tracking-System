@@ -4,6 +4,7 @@ import java.util.*;
 import java.math.BigDecimal;
 
 public class JobCreateRequest {
+    private Long JobID; // For update operations
     private String job_title;
     private String department;
     private String location;
@@ -24,6 +25,9 @@ public class JobCreateRequest {
     }
 
     // getters & setters
+    public Long getJobID(){ return JobID; }
+    public void setJobID(Long JobID){ this.JobID = JobID; }
+
     public String getJob_title(){ return job_title; }
     public void setJob_title(String job_title){ this.job_title = job_title; }
 
