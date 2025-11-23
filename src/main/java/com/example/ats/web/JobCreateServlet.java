@@ -131,10 +131,10 @@ public class JobCreateServlet extends HttpServlet {
                     if (p.endsWith("}")) p = p.substring(0, p.length()-1).trim();
                     if (p.isEmpty()) continue;
                     JobCreateRequest.JD jd = new JobCreateRequest.JD();
-                    jd.title = extractStringField(p, "title");
-                    jd.description = extractStringField(p, "description");
+                    jd.setTitle(extractStringField(p, "title"));
+                    jd.setDescription(extractStringField(p, "description"));
                     String w = extractNumberField(p);
-                    try { jd.weight = w == null ? null : (int) Double.parseDouble(w); } catch(Exception e){ jd.weight = null; }
+                    try { jd.setWeight(w == null ? null : (int) Double.parseDouble(w)); } catch(Exception e){ jd.setWeight(null); }
                     jds.add(jd);
                 }
             }

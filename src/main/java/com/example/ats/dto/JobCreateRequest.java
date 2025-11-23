@@ -2,8 +2,10 @@ package com.example.ats.dto;
 
 import java.util.*;
 import java.math.BigDecimal;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class JobCreateRequest {
+    @JsonProperty("JobID")
     private Long JobID; // For update operations
     private String job_title;
     private String department;
@@ -18,10 +20,26 @@ public class JobCreateRequest {
 
     private List<JD> jds;
 
+    // No-args constructor for Jersey deserialization
+    public JobCreateRequest() {}
+
     public static class JD {
-        public String title;
-        public String description;
-        public Integer weight;
+        private String title;
+        private String description;
+        private Integer weight;
+
+        // No-args constructor
+        public JD() {}
+
+        // Getters and setters
+        public String getTitle() { return title; }
+        public void setTitle(String title) { this.title = title; }
+
+        public String getDescription() { return description; }
+        public void setDescription(String description) { this.description = description; }
+
+        public Integer getWeight() { return weight; }
+        public void setWeight(Integer weight) { this.weight = weight; }
     }
 
     // getters & setters

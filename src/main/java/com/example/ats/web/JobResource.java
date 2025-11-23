@@ -84,7 +84,26 @@ public class JobResource {
 
     @POST
     @Path("/update")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
     public Response updateJob(JobCreateRequest req){
+        LOG.info("=== UPDATE JOB REQUEST RECEIVED ===");
+
+        if (req == null) {
+            LOG.severe("Request object is NULL!");
+            Map<String,Object> err = new HashMap<>();
+            err.put("status", "error");
+            err.put("reason", "Request body is null or could not be deserialized");
+            return Response.status(Response.Status.BAD_REQUEST).entity(err).build();
+        }
+
+        LOG.info("JobID: " + req.getJobID());
+        LOG.info("Title: " + req.getJob_title());
+        LOG.info("Department: " + req.getDepartment());
+        LOG.info("Status: " + req.getStatus());
+        LOG.info("Manager ID: " + req.getManaged_by_manager_id());
+        LOG.info("JDs count: " + (req.getJds() != null ? req.getJds().size() : 0));
+
         initializeServiceIfNeeded();
 
         if (this.jobService == null) {
@@ -95,13 +114,31 @@ public class JobResource {
             return Response.status(Response.Status.SERVICE_UNAVAILABLE).entity(err).build();
         }
 
+        // Validate request
+        if (req.getJobID() == null) {
+            LOG.severe("JobID is null in update request!");
+            Map<String,Object> err = new HashMap<>();
+            err.put("status", "error");
+            err.put("reason", "JobID is required for update");
+            err.put("details", "The JobID field must be provided in the request body");
+            return Response.status(Response.Status.BAD_REQUEST).entity(err).build();
+        }
+
         try {
             Job updated = jobService.updateFromDto(req);
+            LOG.info("Job updated successfully: " + updated.getId());
             Map<String, Object> resp = new HashMap<>();
             resp.put("status", "success");
             resp.put("jobId", updated.getId());
             resp.put("formLink", updated.getFormLink());
             return Response.ok(resp).build();
+        } catch (IllegalArgumentException ex) {
+            LOG.severe("Validation error updating job: " + ex.getMessage());
+            Map<String,Object> err = new HashMap<>();
+            err.put("status", "error");
+            err.put("reason", ex.getMessage());
+            err.put("details", "Validation failed");
+            return Response.status(Response.Status.BAD_REQUEST).entity(err).build();
         } catch (Exception ex) {
             LOG.severe("Error updating job: " + ex.getMessage());
             ex.printStackTrace();

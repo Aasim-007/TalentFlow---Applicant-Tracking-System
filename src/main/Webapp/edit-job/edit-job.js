@@ -337,8 +337,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const validation = validatePayload(payload);
         if(validation.length){ showErrors(validation, true); statusEl.textContent = 'Validation error'; return; }
 
-        // Add JobID to payload for update
-        payload.JobID = CURRENT_JOB_ID;
+        // Add JobID to payload for update - ensure it's a number
+        payload.JobID = Number(CURRENT_JOB_ID);
+
+        console.log('Sending update payload:', JSON.stringify(payload, null, 2));
 
         showProgress();
         if(saveBtn){ saveBtn.disabled = true; saveBtn.textContent = 'Updating...' }
@@ -348,14 +350,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(payload)
             });
 
+            console.log('Update response status:', res.status);
+
             // attempt to parse JSON safely
             let data = null;
-            try { data = await res.clone().json(); } catch(e){ data = null; }
+            try {
+                const responseText = await res.text();
+                console.log('Update response text:', responseText);
+                data = responseText ? JSON.parse(responseText) : null;
+                console.log('Update response data:', data);
+            } catch(e){
+                console.error('Failed to parse response:', e);
+                data = null;
+            }
 
             // If server returned non-2xx, show reason if present
             if(!res.ok){
-                const serverMsg = (data && (data.reason || data.error || data.message)) ? (data.reason||data.error||data.message) : (res.statusText || ('Status ' + res.status));
-                showErrors([`Update failed ${res.status}: ${serverMsg}`]);
+                const serverMsg = (data && (data.reason || data.error || data.message || data.details))
+                    ? (data.reason || data.error || data.message || data.details)
+                    : (res.statusText || ('Status ' + res.status));
+                console.error('Update failed:', serverMsg);
+                showErrors([`Update failed (${res.status}): ${serverMsg}`]);
                 statusEl.textContent = 'Update failed';
                 return;
             }

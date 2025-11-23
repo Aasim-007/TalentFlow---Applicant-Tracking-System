@@ -7,6 +7,7 @@ import com.example.ats.entity.JobDescription;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.Map;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -26,10 +27,15 @@ public class InMemoryJobService extends JobService {
     public Job createFromDto(JobCreateRequest req){
         Job job = new Job();
         job.setTitle(req.getJob_title());
+        List<JobDescription> jdList = null;
         if(req.getJds() != null){
-            job.setJds(req.getJds().stream()
-                    .map(jd -> new JobDescription(jd.title, jd.description, jd.weight))
-                    .collect(Collectors.toList()));
+            jdList = req.getJds().stream()
+                    .map(jd -> new JobDescription(jd.getTitle(), jd.getDescription(), jd.getWeight()))
+                    .collect(Collectors.toList());
+            for (JobDescription jd : jdList) {
+                jd.setJob(job);
+            }
+            job.setJds(jdList);
         }
         long id = idCounter.incrementAndGet();
         job.setId(id); // assign id for client

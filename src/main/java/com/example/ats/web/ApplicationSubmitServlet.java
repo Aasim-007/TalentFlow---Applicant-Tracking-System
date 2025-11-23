@@ -87,30 +87,76 @@ public class ApplicationSubmitServlet extends HttpServlet {
             cvPart.write(filePath);
             String relativePath = UPLOAD_DIR + "/" + fileName;
 
-            // Create application
+            // Sanitize cover letter (remove control characters that break JSON)
+            String sanitizedCoverLetter = sanitizeForJson(coverLetter);
+
             EntityManager em = emf.createEntityManager();
             try {
                 em.getTransaction().begin();
 
-                Application application = new Application();
-                application.setApplicationRef(generateApplicationRef());
-                application.setJobId(jobId);
-                application.setApplicantName(applicantName);
-                application.setApplicantEmail(applicantEmail);
-                application.setApplicantPhone(applicantPhone);
-                application.setCvPath(relativePath);
-                application.setCoverLetter(coverLetter);
-                application.setSubmittedAt(OffsetDateTime.now());
-                application.setStatus(ApplicationStatus.SUBMITTED);
-                application.setUpdatedAt(OffsetDateTime.now());
+                // Step 1: Check if user already exists by email
+                Long applicantUserId = null;
+                try {
+                    applicantUserId = (Long) em.createNativeQuery(
+                        "SELECT id FROM users WHERE email = ? AND role = CAST(? AS user_role)")
+                        .setParameter(1, applicantEmail)
+                        .setParameter(2, "applicant")
+                        .getSingleResult();
+                    LOG.info("Found existing applicant user: " + applicantUserId);
+                } catch (NoResultException e) {
+                    // User doesn't exist, create new one
+                    LOG.info("Creating new applicant user for: " + applicantEmail);
 
-                em.persist(application);
+                    // Insert into users table
+                    em.createNativeQuery(
+                        "INSERT INTO users (email, password_hash, name, role, created_at, updated_at) " +
+                        "VALUES (?, ?, ?, CAST(? AS user_role), ?, ?)")
+                        .setParameter(1, applicantEmail)
+                        .setParameter(2, "temp_hash_" + UUID.randomUUID().toString()) // Temporary password hash
+                        .setParameter(3, applicantName)
+                        .setParameter(4, "applicant")
+                        .setParameter(5, java.sql.Timestamp.from(OffsetDateTime.now().toInstant()))
+                        .setParameter(6, java.sql.Timestamp.from(OffsetDateTime.now().toInstant()))
+                        .executeUpdate();
+
+                    // Get the generated user ID
+                    applicantUserId = (Long) em.createNativeQuery("SELECT lastval()").getSingleResult();
+                    LOG.info("Created user with ID: " + applicantUserId);
+
+                    // Insert into applicant table
+                    em.createNativeQuery(
+                        "INSERT INTO applicant (user_id, phone, linkedin_url) VALUES (?, ?, ?)")
+                        .setParameter(1, applicantUserId)
+                        .setParameter(2, applicantPhone)
+                        .setParameter(3, null) // LinkedIn URL can be added later
+                        .executeUpdate();
+                    LOG.info("Created applicant record for user: " + applicantUserId);
+                }
+
+                // Step 2: Create application with all required fields
+                String applicationRef = generateApplicationRef();
+                em.createNativeQuery(
+                    "INSERT INTO applications (application_ref, job_id, applicant_user_id, applicant_name, applicant_email, applicant_phone, cv_path, cover_letter, submitted_at, status, updated_at) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CAST(? AS application_status), ?)")
+                    .setParameter(1, applicationRef)
+                    .setParameter(2, jobId)
+                    .setParameter(3, applicantUserId)
+                    .setParameter(4, applicantName)
+                    .setParameter(5, applicantEmail)
+                    .setParameter(6, applicantPhone)
+                    .setParameter(7, relativePath)
+                    .setParameter(8, sanitizedCoverLetter)
+                    .setParameter(9, java.sql.Timestamp.from(OffsetDateTime.now().toInstant()))
+                    .setParameter(10, "submitted")
+                    .setParameter(11, java.sql.Timestamp.from(OffsetDateTime.now().toInstant()))
+                    .executeUpdate();
+
                 em.getTransaction().commit();
 
-                LOG.info("Application submitted successfully: " + application.getId());
+                LOG.info("Application submitted successfully with ref: " + applicationRef);
 
                 resp.setStatus(HttpServletResponse.SC_OK);
-                resp.getWriter().write("{\"status\":\"success\",\"applicationRef\":\"" + application.getApplicationRef() + "\"}");
+                resp.getWriter().write("{\"status\":\"success\",\"applicationRef\":\"" + applicationRef + "\"}");
 
             } catch (Exception e) {
                 if (em.getTransaction().isActive()) {
@@ -120,7 +166,7 @@ public class ApplicationSubmitServlet extends HttpServlet {
                 e.printStackTrace();
                 resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
                 String errorMsg = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
-                resp.getWriter().write("{\"status\":\"error\",\"reason\":\"Failed to save application: " + errorMsg.replace("\"", "'") + "\"}");
+                resp.getWriter().write(escapeJson("Failed to save application: " + errorMsg));
             } finally {
                 em.close();
             }
@@ -130,8 +176,26 @@ public class ApplicationSubmitServlet extends HttpServlet {
             e.printStackTrace();
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             String errorMsg = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
-            resp.getWriter().write("{\"status\":\"error\",\"reason\":\"" + errorMsg.replace("\"", "'") + "\"}");
+            resp.getWriter().write(escapeJson(errorMsg));
         }
+    }
+
+    private String sanitizeForJson(String input) {
+        if (input == null) return null;
+        // Remove or escape control characters that break JSON
+        return input.replaceAll("[\\x00-\\x1F\\x7F]", " ").trim();
+    }
+
+    private String escapeJson(String message) {
+        if (message == null) return "{\"status\":\"error\",\"reason\":\"Unknown error\"}";
+        // Properly escape for JSON
+        String escaped = message
+            .replace("\\", "\\\\")
+            .replace("\"", "\\\"")
+            .replace("\n", "\\n")
+            .replace("\r", "\\r")
+            .replace("\t", "\\t");
+        return "{\"status\":\"error\",\"reason\":\"" + escaped + "\"}";
     }
 
     private String generateUniqueFileName(String originalFileName) {

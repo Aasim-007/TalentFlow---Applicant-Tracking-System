@@ -18,7 +18,7 @@ public class JobRepository {
                 tx.begin();
 
                 // Native insert into jobs with explicit enum casts to avoid JDBC varchar->enum issues
-                String insertJob = "INSERT INTO jobs (id, title, department, location, employment_type, salary_min, salary_max, application_deadline, status, form_link, description_summary, created_at, updated_at) VALUES (?, ?, ?, ?, CAST(? AS employment_type), ?, ?, ?, CAST(? AS job_status), ?, ?, ?, ?)";
+                String insertJob = "INSERT INTO jobs (id, title, department, location, employment_type, salary_min, salary_max, application_deadline, status, form_link, description_summary, managed_by_manager_id, created_at, updated_at) VALUES (?, ?, ?, ?, CAST(? AS employment_type), ?, ?, ?, CAST(? AS job_status), ?, ?, ?, ?, ?)";
                 Query q = em.createNativeQuery(insertJob);
                 int idx = 1;
                 q.setParameter(idx++, job.getId());
@@ -32,6 +32,7 @@ public class JobRepository {
                 q.setParameter(idx++, job.getStatus() == null ? null : job.getStatus().getDbValue());
                 q.setParameter(idx++, job.getFormLink());
                 q.setParameter(idx++, job.getDescriptionSummary());
+                q.setParameter(idx++, job.getManagedByManagerId());
                 q.setParameter(idx++, job.getCreatedAt() == null ? java.sql.Timestamp.from(java.time.OffsetDateTime.now().toInstant()) : java.sql.Timestamp.from(job.getCreatedAt().toInstant()));
                 q.setParameter(idx++, job.getUpdatedAt() == null ? java.sql.Timestamp.from(java.time.OffsetDateTime.now().toInstant()) : java.sql.Timestamp.from(job.getUpdatedAt().toInstant()));
                 q.executeUpdate();

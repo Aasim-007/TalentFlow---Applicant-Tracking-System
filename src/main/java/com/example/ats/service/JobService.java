@@ -34,7 +34,7 @@ public class JobService {
         List<JobDescription> jdList = null;
         if(req.getJds() != null){
             jdList = req.getJds().stream()
-                    .map(jd -> new JobDescription(jd.title, jd.description, jd.weight))
+                    .map(jd -> new JobDescription(jd.getTitle(), jd.getDescription(), jd.getWeight()))
                     .collect(Collectors.toList());
             // attach to job with back-reference
             for (JobDescription jd : jdList){ jd.setJob(job); }
@@ -54,13 +54,20 @@ public class JobService {
     public Job updateFromDto(JobCreateRequest req){
         // Get JobID from request
         Long jobId = req.getJobID();
+        System.out.println("=== JobService.updateFromDto ===");
+        System.out.println("JobID from request: " + jobId);
+
         if (jobId == null) {
+            System.err.println("ERROR: JobID is null!");
             throw new IllegalArgumentException("JobID is required for update");
         }
 
         // Fetch existing job
+        System.out.println("Fetching job with ID: " + jobId);
         Job job = jobRepo.findById(jobId)
                 .orElseThrow(() -> new IllegalArgumentException("Job not found with ID: " + jobId));
+
+        System.out.println("Found existing job: " + job.getTitle());
 
         // Update job fields
         job.setTitle(req.getJob_title());
@@ -81,12 +88,15 @@ public class JobService {
         job.setManagedByManagerId(req.getManaged_by_manager_id());
         job.setUpdatedAt(java.time.OffsetDateTime.now());
 
+        System.out.println("Updated job fields, now clearing JDs...");
+
         // Delete existing JDs and add new ones
         job.getJds().clear();
 
         if(req.getJds() != null){
+            System.out.println("Adding " + req.getJds().size() + " new JDs");
             List<JobDescription> jdList = req.getJds().stream()
-                    .map(jd -> new JobDescription(jd.title, jd.description, jd.weight))
+                    .map(jd -> new JobDescription(jd.getTitle(), jd.getDescription(), jd.getWeight()))
                     .collect(Collectors.toList());
             // attach to job with back-reference
             for (JobDescription jd : jdList){
@@ -95,6 +105,9 @@ public class JobService {
             }
         }
 
-        return jobRepo.update(job);
+        System.out.println("Calling jobRepo.update()...");
+        Job result = jobRepo.update(job);
+        System.out.println("Update completed successfully!");
+        return result;
     }
 }
