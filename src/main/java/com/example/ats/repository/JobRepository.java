@@ -62,7 +62,7 @@ public class JobRepository {
 
     // Attempt to retrieve next id from a DB sequence 'jobs_id_seq'. If sequence not found, fallback to max(id)+1.
     public Long nextId(){
-        try (EntityManager em = emf.createEntityManager()) {
+        try (EntityManager em = emf.createEntityManager()){
             try {
                 // try sequence first (Postgres)
                 Object o = em.createNativeQuery("SELECT nextval('jobs_id_seq')").getSingleResult();
