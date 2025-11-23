@@ -15,4 +15,3 @@ public class EmploymentTypeConverter implements AttributeConverter<EmploymentTyp
         return EmploymentType.fromDb(dbData);
     }
 }
-
