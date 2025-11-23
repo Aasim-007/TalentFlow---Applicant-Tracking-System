@@ -279,4 +279,59 @@ public class JobResource {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(err).build();
         }
     }
+
+    @GET
+    @Path("/manager/{managerId}")
+    public Response getJobsByManager(@PathParam("managerId") Long managerId, @QueryParam("status") String status){
+        initializeServiceIfNeeded();
+
+        if (this.jobService == null) {
+            Map<String,Object> err = new HashMap<>();
+            err.put("status", "error");
+            err.put("reason", "Service unavailable: initialization failed");
+            return Response.status(Response.Status.SERVICE_UNAVAILABLE).entity(err).build();
+        }
+
+        try {
+            var allJobs = jobService.findAll();
+
+            // Filter jobs by manager ID
+            var managerJobs = allJobs.stream()
+                    .filter(job -> managerId.equals(job.getManagedByManagerId()))
+                    .toList();
+
+            // If status filter is provided, apply it
+            if (status != null && !status.isEmpty() && !status.equalsIgnoreCase("all")) {
+                managerJobs = managerJobs.stream()
+                        .filter(job -> job.getStatus() != null &&
+                                     job.getStatus().name().equalsIgnoreCase(status))
+                        .toList();
+            }
+
+            var jobList = managerJobs.stream().map(job -> {
+                Map<String, Object> jobData = new HashMap<>();
+                jobData.put("id", job.getId());
+                jobData.put("title", job.getTitle());
+                jobData.put("department", job.getDepartment());
+                jobData.put("location", job.getLocation());
+                jobData.put("employmentType", job.getEmploymentType() != null ? job.getEmploymentType().name() : null);
+                jobData.put("salaryMin", job.getSalaryMin());
+                jobData.put("salaryMax", job.getSalaryMax());
+                jobData.put("applicationDeadline", job.getApplicationDeadline());
+                jobData.put("status", job.getStatus() != null ? job.getStatus().name().toLowerCase() : "draft");
+                jobData.put("formLink", job.getFormLink());
+                jobData.put("descriptionSummary", job.getDescriptionSummary());
+                return jobData;
+            }).toList();
+
+            return Response.ok(jobList).build();
+
+        } catch (Exception ex) {
+            LOG.severe("Error fetching manager jobs: " + ex.getMessage());
+            Map<String,Object> err = new HashMap<>();
+            err.put("status", "error");
+            err.put("reason", "Failed to fetch jobs");
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(err).build();
+        }
+    }
 }

@@ -51,10 +51,22 @@
   };
 
   function badgeForStatus(s){
-    if(s === 'active') return 'badge b-active';
-    if(s === 'pending') return 'badge b-pending';
+    // Map database status to frontend display
+    // DB: draft -> Frontend: pending
+    // DB: published -> Frontend: active
+    // DB: closed -> Frontend: closed
+    if(s === 'published') return 'badge b-active';
+    if(s === 'draft') return 'badge b-pending';
     if(s === 'closed') return 'badge b-closed';
     return 'badge';
+  }
+
+  function mapStatusForDisplay(dbStatus){
+    // Convert database status to user-friendly display text
+    if(dbStatus === 'published') return 'Active';
+    if(dbStatus === 'draft') return 'Pending';
+    if(dbStatus === 'closed') return 'Closed';
+    return (dbStatus || '').replace(/^./, m=>m.toUpperCase());
   }
 
   function chipForApplicantStatus(s){
@@ -86,8 +98,8 @@
       const job = await resp.json();
       renderJob(job);
     } catch(e){
-      // fallback demo
-      const job = { id: currentJobId, title: 'Job #' + currentJobId, department: '—', location: '—', status:'pending', postedDate: null };
+      // fallback demo - use database status value
+      const job = { id: currentJobId, title: 'Job #' + currentJobId, department: '—', location: '—', status:'draft', postedDate: null };
       renderJob(job);
     }
   }
@@ -98,7 +110,10 @@
     if(el.jobLocation) el.jobLocation.textContent = job.location || '—';
     if(el.jobDept) el.jobDept.textContent = job.department || '—';
     if(el.jobPosted) el.jobPosted.textContent = formatDate(job.postedDate);
-    if(el.jobStatus){ el.jobStatus.textContent = (job.status||'').replace(/^./, m=>m.toUpperCase()); el.jobStatus.className = badgeForStatus(job.status); }
+    if(el.jobStatus){
+      el.jobStatus.textContent = mapStatusForDisplay(job.status);
+      el.jobStatus.className = badgeForStatus(job.status);
+    }
   }
 
   async function loadApplicants(){

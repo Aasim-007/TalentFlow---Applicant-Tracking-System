@@ -90,7 +90,7 @@
           <div class="meta">
             <span>📍 ${j.location || 'Not specified'}</span>
             <span>🏢 ${j.department || 'General'}</span>
-            <span>📅 Deadline: ${formatDate(j.applicationDeadline)}</span>
+            <span>📅 Posted: ${formatDate(j.postedDate)}</span>
           </div>
         </div>
         <span class="${statusBadgeClass(j.status)}">${mapDbStatusToDisplay(j.status)}</span>
@@ -137,4 +137,3 @@
 
   load();
 })();
-

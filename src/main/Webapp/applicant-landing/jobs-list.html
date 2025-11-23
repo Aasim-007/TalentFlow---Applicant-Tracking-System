@@ -132,7 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ${job.applicationDeadline ? `<div class="job-meta-item"><span>📅</span><span>Apply by ${formatDate(job.applicationDeadline)}</span></div>` : ''}
           </div>
           <div style="margin-top:10px;">
-            <span class="badge ${job.status}">${job.status}</span>
+            <span class="badge ${job.status}">Active</span>
           </div>
         </div>
       `).join('');
