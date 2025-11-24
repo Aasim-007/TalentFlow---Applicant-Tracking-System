@@ -1,5 +1,7 @@
 package com.example.ats.web;
 
+import com.example.ats.entity.Application;
+import com.example.ats.entity.Job;
 import jakarta.persistence.*;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.*;
@@ -117,5 +119,57 @@ public class ApplicationResource {
             err.put("reason", e.getClass().getName() + ": " + e.getMessage());
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(err).build();
         } finally { if (em != null){ try { em.close(); } catch(Exception ignore){} } }
+    }
+
+    @GET
+    @Path("/applicant/{applicantId}")
+    public Response getApplicantApplications(@PathParam("applicantId") Long applicantId){
+        try {
+            EntityManager em = getEmf().createEntityManager();
+
+            // Query to get all applications for this applicant with job details
+            String jpql = "SELECT a FROM Application a WHERE a.applicantUserId = :applicantId ORDER BY a.submittedAt DESC";
+            List<Application> applications = em.createQuery(jpql, Application.class)
+                    .setParameter("applicantId", applicantId)
+                    .getResultList();
+
+            // Convert to JSON-friendly format with job details
+            var result = applications.stream().map(app -> {
+                Map<String, Object> appData = new HashMap<>();
+                appData.put("id", app.getId());
+                appData.put("applicationRef", app.getApplicationRef());
+                appData.put("jobId", app.getJobId());
+                appData.put("status", app.getStatus() != null ? app.getStatus().name().toLowerCase() : "submitted");
+                appData.put("submittedAt", app.getSubmittedAt());
+                appData.put("coverLetter", app.getCoverLetter());
+                appData.put("cvPath", app.getCvPath());
+                appData.put("matchScore", app.getMatchScore());
+
+                // Fetch job details
+                try {
+                    Job job = em.find(Job.class, app.getJobId());
+                    if (job != null) {
+                        Map<String, Object> jobData = new HashMap<>();
+                        jobData.put("title", job.getTitle());
+                        jobData.put("department", job.getDepartment());
+                        jobData.put("location", job.getLocation());
+                        jobData.put("employmentType", job.getEmploymentType() != null ? job.getEmploymentType().name() : null);
+                        appData.put("job", jobData);
+                    }
+                } catch (Exception e) {
+                    // Job might have been deleted
+                    appData.put("job", null);
+                }
+
+                return appData;
+            }).toList();
+
+            em.close();
+            return Response.ok(result).build();
+
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(Map.of("error", e.getMessage())).build();
+        }
     }
 }

@@ -37,8 +37,36 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
+    // Check if user is logged in and pre-fill data
+    checkUserSession();
+
     // Load job details
     loadJobDetails(jobId);
+
+    // Function to check user session and pre-fill form
+    async function checkUserSession() {
+        try {
+            const response = await fetch('/api/auth/current-user');
+            if (response.ok) {
+                const userData = await response.json();
+                // Pre-fill name and email if available
+                if (userData.name) {
+                    const nameInput = document.querySelector('input[name="applicantName"]');
+                    if (nameInput) nameInput.value = userData.name;
+                }
+                if (userData.email) {
+                    const emailInput = document.querySelector('input[name="applicantEmail"]');
+                    if (emailInput) emailInput.value = userData.email;
+                }
+                // Store user ID for later use
+                applicationForm.dataset.userId = userData.userId;
+                console.log('Session loaded, userId:', userData.userId);
+            }
+        } catch (error) {
+            // User not logged in - that's fine, they can still apply as guest
+            console.log('No active session, user can apply as guest');
+        }
+    }
 
     // File upload handling
     uploadArea.addEventListener('click', () => cvInput.click());
@@ -157,6 +185,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const formData = new FormData(applicationForm);
         formData.append('jobId', jobId);
 
+        // Add user ID if logged in (prevents creating duplicate user)
+        const userId = applicationForm.dataset.userId;
+        if (userId) {
+            formData.append('userId', userId);
+        }
+
         // Validate CV file
         const cvFile = cvInput.files[0];
         if (!cvFile) {
@@ -199,12 +233,31 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function showSuccessPage(appRef) {
+        // Check if user is logged in to show appropriate button
+        const isLoggedIn = applicationForm.dataset.userId;
+
         document.getElementById('mainContent').innerHTML = `
             <section class="card" style="text-align:center;padding:40px 20px;">
                 <div style="font-size:64px;margin-bottom:16px;">✓</div>
-                <h2 style="margin:0 0 12px 0;color:var(--success);">Application Submitted Successfully!</h2>
+                <h2 style="margin:0 0 12px 0;color:var(--accent2);">Application Submitted Successfully!</h2>
                 <p class="muted" style="margin:0 0 20px 0;">Your application reference: <strong style="color:var(--accent1);">${appRef}</strong></p>
                 <p class="muted">We've received your application and will review it shortly. You'll hear from us soon!</p>
+                ${isLoggedIn ? `
+                <div style="display:flex;gap:12px;justify-content:center;margin-top:30px;flex-wrap:wrap;">
+                    <button onclick="window.location.href='/applicant-landing/my-applications.html'" class="btn" style="background:linear-gradient(90deg,var(--accent2),var(--accent1));color:#022027;font-weight:700;padding:12px 24px;border:0;border-radius:10px;cursor:pointer;font-size:15px;">
+                        📋 View My Applications
+                    </button>
+                    <button onclick="window.location.href='/applicant-landing/jobs-list.html'" class="btn" style="background:transparent;color:var(--text);font-weight:600;padding:12px 24px;border:1px solid rgba(96,165,250,0.35);border-radius:10px;cursor:pointer;font-size:15px;">
+                        💼 Browse More Jobs
+                    </button>
+                </div>
+                ` : `
+                <div style="margin-top:30px;">
+                    <button onclick="window.location.href='/applicant-landing/jobs-list.html'" class="btn" style="background:linear-gradient(90deg,var(--accent2),var(--accent1));color:#022027;font-weight:700;padding:12px 24px;border:0;border-radius:10px;cursor:pointer;font-size:15px;">
+                        💼 Browse More Jobs
+                    </button>
+                </div>
+                `}
             </section>
         `;
     }

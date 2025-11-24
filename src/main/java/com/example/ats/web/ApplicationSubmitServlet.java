@@ -59,6 +59,7 @@ public class ApplicationSubmitServlet extends HttpServlet {
         try {
             // Extract form data
             String jobIdStr = req.getParameter("jobId");
+            String userIdStr = req.getParameter("userId"); // Get userId from logged-in user
             String applicantName = req.getParameter("applicantName");
             String applicantEmail = req.getParameter("applicantEmail");
             String applicantPhone = req.getParameter("applicantPhone");
@@ -94,43 +95,66 @@ public class ApplicationSubmitServlet extends HttpServlet {
             try {
                 em.getTransaction().begin();
 
-                // Step 1: Check if user already exists by email
+                // Step 1: Determine applicant user ID
                 Long applicantUserId = null;
-                try {
-                    applicantUserId = (Long) em.createNativeQuery(
-                        "SELECT id FROM users WHERE email = ? AND role = CAST(? AS user_role)")
-                        .setParameter(1, applicantEmail)
-                        .setParameter(2, "applicant")
-                        .getSingleResult();
-                    LOG.info("Found existing applicant user: " + applicantUserId);
-                } catch (NoResultException e) {
-                    // User doesn't exist, create new one
-                    LOG.info("Creating new applicant user for: " + applicantEmail);
 
-                    // Insert into users table
-                    em.createNativeQuery(
-                        "INSERT INTO users (email, password_hash, name, role, created_at, updated_at) " +
-                        "VALUES (?, ?, ?, CAST(? AS user_role), ?, ?)")
-                        .setParameter(1, applicantEmail)
-                        .setParameter(2, "temp_hash_" + UUID.randomUUID().toString()) // Temporary password hash
-                        .setParameter(3, applicantName)
-                        .setParameter(4, "applicant")
-                        .setParameter(5, java.sql.Timestamp.from(OffsetDateTime.now().toInstant()))
-                        .setParameter(6, java.sql.Timestamp.from(OffsetDateTime.now().toInstant()))
-                        .executeUpdate();
+                // If userId is provided (user is logged in), use it directly
+                if (userIdStr != null && !userIdStr.isBlank()) {
+                    applicantUserId = Long.parseLong(userIdStr);
+                    LOG.info("Using logged-in user ID: " + applicantUserId);
 
-                    // Get the generated user ID
-                    applicantUserId = (Long) em.createNativeQuery("SELECT lastval()").getSingleResult();
-                    LOG.info("Created user with ID: " + applicantUserId);
+                    // Verify user exists and is an applicant
+                    try {
+                        Long verifyId = (Long) em.createNativeQuery(
+                            "SELECT id FROM users WHERE id = ? AND role = CAST(? AS user_role)")
+                            .setParameter(1, applicantUserId)
+                            .setParameter(2, "applicant")
+                            .getSingleResult();
+                        LOG.info("Verified user is applicant: " + verifyId);
+                    } catch (NoResultException e) {
+                        LOG.warning("User ID provided but not found or not an applicant: " + applicantUserId);
+                        applicantUserId = null; // Fall back to email check
+                    }
+                }
 
-                    // Insert into applicant table
-                    em.createNativeQuery(
-                        "INSERT INTO applicant (user_id, phone, linkedin_url) VALUES (?, ?, ?)")
-                        .setParameter(1, applicantUserId)
-                        .setParameter(2, applicantPhone)
-                        .setParameter(3, null) // LinkedIn URL can be added later
-                        .executeUpdate();
-                    LOG.info("Created applicant record for user: " + applicantUserId);
+                // If no valid userId, check by email or create new user
+                if (applicantUserId == null) {
+                    try {
+                        applicantUserId = (Long) em.createNativeQuery(
+                            "SELECT id FROM users WHERE email = ? AND role = CAST(? AS user_role)")
+                            .setParameter(1, applicantEmail)
+                            .setParameter(2, "applicant")
+                            .getSingleResult();
+                        LOG.info("Found existing applicant user by email: " + applicantUserId);
+                    } catch (NoResultException e) {
+                        // User doesn't exist, create new one
+                        LOG.info("Creating new applicant user for: " + applicantEmail);
+
+                        // Insert into users table
+                        em.createNativeQuery(
+                            "INSERT INTO users (email, password_hash, name, role, created_at, updated_at) " +
+                            "VALUES (?, ?, ?, CAST(? AS user_role), ?, ?)")
+                            .setParameter(1, applicantEmail)
+                            .setParameter(2, "temp_hash_" + UUID.randomUUID().toString()) // Temporary password hash
+                            .setParameter(3, applicantName)
+                            .setParameter(4, "applicant")
+                            .setParameter(5, java.sql.Timestamp.from(OffsetDateTime.now().toInstant()))
+                            .setParameter(6, java.sql.Timestamp.from(OffsetDateTime.now().toInstant()))
+                            .executeUpdate();
+
+                        // Get the generated user ID
+                        applicantUserId = (Long) em.createNativeQuery("SELECT lastval()").getSingleResult();
+                        LOG.info("Created user with ID: " + applicantUserId);
+
+                        // Insert into applicant table
+                        em.createNativeQuery(
+                            "INSERT INTO applicant (user_id, phone, linkedin_url) VALUES (?, ?, ?)")
+                            .setParameter(1, applicantUserId)
+                            .setParameter(2, applicantPhone)
+                            .setParameter(3, null) // LinkedIn URL can be added later
+                            .executeUpdate();
+                        LOG.info("Created applicant record for user: " + applicantUserId);
+                    }
                 }
 
                 // Step 2: Create application with all required fields
@@ -153,10 +177,10 @@ public class ApplicationSubmitServlet extends HttpServlet {
 
                 em.getTransaction().commit();
 
-                LOG.info("Application submitted successfully with ref: " + applicationRef);
+                LOG.info("Application submitted successfully - UserID: " + applicantUserId + ", Ref: " + applicationRef);
 
                 resp.setStatus(HttpServletResponse.SC_OK);
-                resp.getWriter().write("{\"status\":\"success\",\"applicationRef\":\"" + applicationRef + "\"}");
+                resp.getWriter().write("{\"status\":\"success\",\"applicationRef\":\"" + applicationRef + "\",\"userId\":" + applicantUserId + "}");
 
             } catch (Exception e) {
                 if (em.getTransaction().isActive()) {
