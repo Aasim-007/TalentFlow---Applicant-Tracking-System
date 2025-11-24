@@ -88,11 +88,11 @@ public class ApplicationResource {
         }
     }
 
-    // Update application status to accepted (for "Move to Next Round")
+    // Update application status to shortlisted (for "Move to Next Round")
     @POST
     @Path("applications/{applicationId}/accept")
     public Response accept(@PathParam("applicationId") Long applicationId){
-        return updateApplicationStatus(applicationId, "accepted", false);
+        return updateApplicationStatus(applicationId, "shortlisted", false);
     }
 
     // Update application status to rejected

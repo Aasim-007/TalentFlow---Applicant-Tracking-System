@@ -34,8 +34,24 @@
     if(!iso) return 'N/A';
     try{
       const d = new Date(iso);
-      return d.toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric', hour:'2-digit', minute:'2-digit'});
-    } catch(e){ return iso; }
+      // Check if date is valid
+      if (isNaN(d.getTime())) return iso;
+
+      // Format: "Nov 24, 2025 at 8:30 PM"
+      const datePart = d.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+      });
+      const timePart = d.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      });
+      return `${datePart} at ${timePart}`;
+    } catch(e){
+      return iso;
+    }
   }
 
   function formatEmploymentType(type) {
@@ -84,7 +100,7 @@
       }
 
       // Fetch applications for this applicant
-      const resp = await fetch(`/api/applicant/${applicantId}`);
+      const resp = await fetch(`/api/applications/applicant/${applicantId}`);
       if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const applications = await resp.json();
 
@@ -93,67 +109,86 @@
         return;
       }
 
-      // Fetch interview details for each application
-      const appsWithInterviews = await Promise.all(applications.map(async app => {
+      // Fetch notifications for each application (ONLY from notifications table)
+      const appsWithDetails = await Promise.all(applications.map(async app => {
+        // Fetch notifications from notifications table ONLY
         try {
-          const interviewResp = await fetch(`/api/interviews/application/${app.id}`);
-          if (interviewResp.ok) {
-            app.interviews = await interviewResp.json();
+          const notificationResp = await fetch(`/api/notifications/application/${app.id}`);
+          console.log(`Fetching notifications for app ${app.id}:`, notificationResp.status);
+          if (notificationResp.ok) {
+            app.notifications = await notificationResp.json();
+            console.log(`Got ${app.notifications.length} notifications for app ${app.id}:`, app.notifications);
           } else {
-            app.interviews = [];
+            console.warn(`Failed to fetch notifications for app ${app.id}: ${notificationResp.status}`);
+            app.notifications = [];
           }
         } catch (e) {
-          app.interviews = [];
+          console.error(`Error fetching notifications for app ${app.id}:`, e);
+          app.notifications = [];
         }
+
         return app;
       }));
 
-      applicationsEl.innerHTML = appsWithInterviews.map(app => {
+      applicationsEl.innerHTML = appsWithDetails.map(app => {
         const job = app.job || {};
         const hasScore = app.matchScore !== null && app.matchScore !== undefined;
-        const hasInterviews = app.interviews && app.interviews.length > 0;
+        const hasNotifications = app.notifications && app.notifications.length > 0;
 
-        // Interview details HTML
-        let interviewsHtml = '';
-        if (hasInterviews) {
-          interviewsHtml = '<div style="margin-top:12px;padding:12px;background:rgba(168,85,247,0.08);border-radius:8px;border:1px solid rgba(168,85,247,0.25);">' +
-            '<div style="font-weight:700;color:var(--accent1);margin-bottom:8px;">📅 Interview Scheduled</div>';
+        console.log(`Rendering app ${app.id}: ${hasNotifications ? app.notifications.length : 0} notifications`);
 
-          app.interviews.forEach(interview => {
-            const startDate = new Date(interview.scheduledStart);
-            const formattedDate = startDate.toLocaleDateString('en-US', {
-              weekday: 'long',
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric'
-            });
-            const formattedTime = startDate.toLocaleTimeString('en-US', {
-              hour: '2-digit',
-              minute: '2-digit'
-            });
+        // Notifications HTML - ONLY from notifications table
+        let notificationsHtml = '';
+        if (hasNotifications) {
+          app.notifications.forEach(notification => {
+            const notifType = notification.notificationType || '';
+            const sentDate = notification.sentAt ? formatDate(notification.sentAt) : 'Recently';
 
-            interviewsHtml += `
-              <div style="margin-top:8px;">
-                <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
-                  <span>🕒</span>
-                  <span><strong>${formattedDate}</strong> at ${formattedTime}</span>
+            console.log(`Rendering notification type: ${notifType}, subject: ${notification.subject}`);
+
+            // Determine notification style based on type
+            let bgColor, borderColor, icon, title;
+
+            if (notifType === 'rejection_email') {
+              bgColor = 'rgba(239,68,68,0.08)';
+              borderColor = 'rgba(239,68,68,0.25)';
+              icon = '❌';
+              title = 'Application Update';
+            } else if (notifType === 'interview_invite') {
+              bgColor = 'rgba(168,85,247,0.08)';
+              borderColor = 'rgba(168,85,247,0.25)';
+              icon = '📅';
+              title = 'Interview Invitation';
+            } else if (notifType === 'offer') {
+              bgColor = 'rgba(16,185,129,0.08)';
+              borderColor = 'rgba(16,185,129,0.25)';
+              icon = '🎉';
+              title = 'Offer Letter';
+            } else {
+              bgColor = 'rgba(96,165,250,0.08)';
+              borderColor = 'rgba(96,165,250,0.25)';
+              icon = '📧';
+              title = 'Notification';
+            }
+
+            notificationsHtml += `
+              <div style="margin-top:12px;padding:12px;background:${bgColor};border-radius:8px;border:1px solid ${borderColor};">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                  <span style="font-size:18px;">${icon}</span>
+                  <div>
+                    <div style="font-weight:700;color:var(--text);">${title}</div>
+                    <div style="font-size:12px;color:var(--muted);">${sentDate}</div>
+                  </div>
                 </div>
-                ${interview.location ? `
-                  <div style="display:flex;align-items:center;gap:8px;margin-top:4px;color:var(--muted);font-size:13px;">
-                    <span>📍</span>
-                    <span>${escapeHtml(interview.location)}</span>
-                  </div>
+                ${notification.subject ? `
+                  <div style="font-weight:600;margin-bottom:6px;color:var(--text);">${escapeHtml(notification.subject)}</div>
                 ` : ''}
-                ${interview.notes ? `
-                  <div style="margin-top:6px;color:var(--muted);font-size:13px;">
-                    <strong>Notes:</strong> ${escapeHtml(interview.notes)}
-                  </div>
+                ${notification.body ? `
+                  <div style="color:var(--muted);font-size:13px;white-space:pre-wrap;line-height:1.6;">${escapeHtml(notification.body)}</div>
                 ` : ''}
               </div>
             `;
           });
-
-          interviewsHtml += '</div>';
         }
 
         return `
@@ -195,7 +230,7 @@
               ` : ''}
             </div>
             
-            ${interviewsHtml}
+            ${notificationsHtml}
           </div>
         `;
       }).join('');

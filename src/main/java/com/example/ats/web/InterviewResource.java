@@ -267,12 +267,38 @@ public class InterviewResource {
         if (applicantEmail == null || applicantEmail.isEmpty()) return;
 
         try {
-            String subject = "Interview Scheduled - Job Application";
+            // Get job title for better notification context
+            String jobTitle = "the position";
+            try {
+                String getJobSql = "SELECT j.title FROM jobs j " +
+                                  "JOIN applications a ON j.id = a.job_id " +
+                                  "WHERE a.id = ?1";
+                Object titleObj = em.createNativeQuery(getJobSql)
+                        .setParameter(1, applicationId)
+                        .getSingleResult();
+                if (titleObj != null) jobTitle = titleObj.toString();
+            } catch (Exception e) {
+                // Ignore if job not found
+            }
+
+            // Format interview date/time nicely
+            String formattedDateTime = scheduledStart.toString(); // Will be formatted on frontend
+
+            String subject = "Interview Invitation - " + jobTitle;
             String body = String.format(
-                "Dear %s,\n\nYour interview has been scheduled.\n\nDetails:\nDate: %s\nLocation: %s\n\nGood luck!",
+                "Dear %s,\n\n" +
+                "Congratulations! We are pleased to invite you for an interview for %s.\n\n" +
+                "Interview Details:\n" +
+                "Date & Time: %s\n" +
+                "Location: %s\n\n" +
+                "Please arrive 10 minutes early and bring a valid ID. " +
+                "If you need to reschedule, please contact us as soon as possible.\n\n" +
+                "We look forward to meeting you!\n\n" +
+                "Best regards,\nTalent Flow Team",
                 applicantName != null ? applicantName : "Applicant",
-                scheduledStart,
-                location
+                jobTitle,
+                formattedDateTime,
+                location != null ? location : "To be confirmed"
             );
 
             // Use native query to insert notification

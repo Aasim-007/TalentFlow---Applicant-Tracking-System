@@ -90,6 +90,7 @@
 
   function displayStatusName(s){
     if (!s) return 'Unknown';
+    if (s === 'shortlisted') return 'Accepted';
     return s.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
   }
 
@@ -150,7 +151,7 @@
     const stats = {
       total: allApplicants.length,
       review: allApplicants.filter(a=>a.status==='under_review').length,
-      accepted: allApplicants.filter(a=>a.status==='accepted').length,
+      accepted: allApplicants.filter(a=>a.status==='shortlisted').length,
       rejected: allApplicants.filter(a=>a.status==='rejected').length
     };
     if(el.applicantCount) el.applicantCount.textContent = String(stats.total);
@@ -192,8 +193,19 @@
           <span class="${chipForApplicantStatus(a.status)}">${displayStatusName(a.status)}</span>
         </div>
         <div class="actions">
-          <button class="btn" data-action="view">View Details</button>
-          <button class="btn danger" data-action="reject" ${a.status==='rejected' ? 'disabled' : ''}>✗ Reject</button>
+          <button class="btn view-btn" data-action="view">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:16px;height:16px;">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+            </svg>
+            View Details
+          </button>
+          <button class="btn reject-btn" data-action="reject" ${a.status==='rejected' ? 'disabled' : ''}>
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:16px;height:16px;">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+            Reject
+          </button>
         </div>
       </div>
     `).join('');
@@ -212,57 +224,103 @@
   function viewApplicant(app){
     const cvPath = app.cvPath || '';
     const coverLetter = app.coverLetter || 'No cover letter provided.';
+    const isDark = !body.classList.contains('theme-light');
 
     const modal = document.createElement('div');
-    modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+    modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeIn 0.2s ease;';
+
+    const bgColor = isDark ? '#0d1c31' : '#ffffff';
+    const borderColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)';
+    const cardBg = isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)';
 
     modal.innerHTML = `
-      <div style="background:${body.classList.contains('theme-light') ? '#ffffff' : '#0d1c31'};border-radius:12px;max-width:900px;width:100%;max-height:90vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
-        <div style="padding:24px;border-bottom:1px solid rgba(0,0,0,0.1);">
-          <div style="display:flex;justify-content:space-between;align-items:start;">
-            <div>
-              <h2 style="margin:0 0 8px 0;font-size:24px;">${escapeHtml(app.name)}</h2>
-              <div style="color:var(--muted);font-size:14px;">
-                <div>📧 ${escapeHtml(app.email)}</div>
-                <div>📱 ${escapeHtml(app.phone || 'N/A')}</div>
-                <div>📅 Applied: ${formatDate(app.appliedDate)}</div>
+      <style>
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .modal-content { animation: slideUp 0.3s ease; }
+        .detail-section { padding: 20px; border-radius: 10px; background: ${cardBg}; border: 1px solid ${borderColor}; margin-bottom: 16px; transition: all 0.2s ease; }
+        .detail-section:hover { border-color: rgba(96,165,250,0.3); box-shadow: 0 4px 12px rgba(96,165,250,0.05); }
+        .detail-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); font-weight: 600; margin-bottom: 8px; }
+        .detail-value { font-size: 15px; line-height: 1.6; }
+        .info-row { display: flex; align-items: center; gap: 8px; margin: 6px 0; font-size: 14px; color: var(--text); }
+        .info-row svg { width: 18px; height: 18px; opacity: 0.7; }
+      </style>
+      <div class="modal-content" style="background:${bgColor};border-radius:16px;max-width:950px;width:100%;max-height:92vh;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,0.4);display:flex;flex-direction:column;border:1px solid ${borderColor};">
+        
+        <!-- Header -->
+        <div style="padding:28px 32px;border-bottom:1px solid ${borderColor};background:linear-gradient(135deg, ${isDark ? 'rgba(96,165,250,0.08)' : 'rgba(96,165,250,0.06)'} 0%, transparent 100%);">
+          <div style="display:flex;justify-content:space-between;align-items:start;gap:20px;">
+            <div style="flex:1;">
+              <h2 style="margin:0 0 16px 0;font-size:26px;font-weight:700;background:linear-gradient(135deg,var(--accent1),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">${escapeHtml(app.name)}</h2>
+              <div style="display:grid;gap:8px;">
+                <div class="info-row">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                  <span>${escapeHtml(app.email)}</span>
+                </div>
+                <div class="info-row">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                  <span>${escapeHtml(app.phone || 'Not provided')}</span>
+                </div>
+                <div class="info-row">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                  <span>Applied ${formatDate(app.appliedDate)}</span>
+                </div>
               </div>
             </div>
-            <button id="closeModal" style="background:transparent;border:none;font-size:28px;cursor:pointer;color:var(--muted);padding:0;width:40px;height:40px;">×</button>
+            <button id="closeModal" style="background:rgba(0,0,0,0.05);border:none;font-size:24px;cursor:pointer;color:var(--muted);padding:0;width:44px;height:44px;border-radius:10px;transition:all 0.2s ease;display:flex;align-items:center;justify-content:center;flex-shrink:0;" onmouseover="this.style.background='rgba(239,68,68,0.15)';this.style.color='#ef4444';" onmouseout="this.style.background='rgba(0,0,0,0.05)';this.style.color='var(--muted)';">×</button>
           </div>
         </div>
         
-        <div style="padding:24px;">
-          <div style="margin-bottom:24px;">
-            <h3 style="margin:0 0 12px 0;font-size:18px;">Status</h3>
-            <span class="${chipForApplicantStatus(app.status)}" style="display:inline-block;">${displayStatusName(app.status)}</span>
+        <!-- Body -->
+        <div style="padding:28px 32px;overflow-y:auto;flex:1;">
+          
+          <!-- Status & Score Row -->
+          <div style="display:grid;grid-template-columns:${app.matchScore ? '1fr 1fr' : '1fr'};gap:16px;margin-bottom:24px;">
+            <div class="detail-section" style="padding:18px;">
+              <div class="detail-label">Application Status</div>
+              <span class="${chipForApplicantStatus(app.status)}" style="display:inline-flex;margin-top:4px;font-size:13px;">${displayStatusName(app.status)}</span>
+            </div>
+            ${app.matchScore ? `
+            <div class="detail-section" style="padding:18px;">
+              <div class="detail-label">Match Score</div>
+              <div style="display:flex;align-items:baseline;gap:6px;margin-top:4px;">
+                <span style="font-size:36px;font-weight:800;background:linear-gradient(135deg,var(--accent1),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">${Math.round(app.matchScore)}</span>
+                <span style="font-size:18px;color:var(--muted);font-weight:600;">%</span>
+              </div>
+            </div>
+            ` : ''}
           </div>
           
-          ${app.matchScore ? `
-          <div style="margin-bottom:24px;">
-            <h3 style="margin:0 0 12px 0;font-size:18px;">Match Score</h3>
-            <div style="font-size:32px;font-weight:700;color:var(--accent2);">${Math.round(app.matchScore)}%</div>
-          </div>
-          ` : ''}
-          
-          <div style="margin-bottom:24px;">
-            <h3 style="margin:0 0 12px 0;font-size:18px;">Cover Letter</h3>
-            <div style="padding:16px;background:rgba(0,0,0,0.05);border-radius:8px;white-space:pre-wrap;font-size:14px;line-height:1.6;">${escapeHtml(coverLetter)}</div>
+          <!-- Cover Letter -->
+          <div class="detail-section">
+            <div class="detail-label">Cover Letter</div>
+            <div class="detail-value" style="padding-top:4px;white-space:pre-wrap;color:var(--text);">${escapeHtml(coverLetter)}</div>
           </div>
           
+          <!-- CV -->
           ${cvPath ? `
-          <div style="margin-bottom:24px;">
-            <h3 style="margin:0 0 12px 0;font-size:18px;">CV / Resume</h3>
-            <embed src="/${cvPath}" type="application/pdf" width="100%" height="600px" style="border-radius:8px;border:1px solid rgba(0,0,0,0.1);" />
-            <a href="/${cvPath}" target="_blank" class="btn" style="margin-top:12px;display:inline-block;text-decoration:none;">📄 Open CV in New Tab</a>
+          <div class="detail-section">
+            <div class="detail-label">CV / Resume</div>
+            <div style="margin-top:12px;border-radius:10px;overflow:hidden;border:1px solid ${borderColor};">
+              <embed src="/${cvPath}" type="application/pdf" width="100%" height="500px" style="display:block;" />
+            </div>
+            <a href="/${cvPath}" target="_blank" style="margin-top:14px;display:inline-flex;align-items:center;gap:8px;padding:10px 18px;background:${isDark ? 'rgba(96,165,250,0.12)' : 'rgba(96,165,250,0.08)'};color:var(--accent1);border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;border:1px solid rgba(96,165,250,0.2);transition:all 0.2s ease;" onmouseover="this.style.background='rgba(96,165,250,0.18)';this.style.borderColor='rgba(96,165,250,0.4)';" onmouseout="this.style.background='${isDark ? 'rgba(96,165,250,0.12)' : 'rgba(96,165,250,0.08)'}';this.style.borderColor='rgba(96,165,250,0.2)';">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:18px;height:18px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+              Open in New Tab
+            </a>
           </div>
-          ` : '<div style="color:var(--muted);">No CV uploaded</div>'}
+          ` : '<div class="detail-section"><div class="detail-label">CV / Resume</div><div style="color:var(--muted);padding-top:8px;">No CV uploaded</div></div>'}
           
-          <div style="display:flex;gap:12px;margin-top:24px;">
-            ${app.status !== 'rejected' && app.status !== 'accepted' ? `<button id="moveNext" class="btn success" style="flex:1;">Accept & Move to Next Round</button>` : ''}
-            ${app.status !== 'rejected' ? `<button id="rejectApp" class="btn danger" style="flex:1;">Reject Application</button>` : ''}
-          </div>
         </div>
+        
+        <!-- Footer Actions -->
+        ${app.status !== 'rejected' && (app.status !== 'shortlisted' || app.status === 'rejected') ? `
+        <div style="padding:20px 32px;border-top:1px solid ${borderColor};display:flex;gap:12px;background:${isDark ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.01)'};">
+          ${app.status !== 'rejected' && app.status !== 'shortlisted' ? `<button id="moveNext" style="flex:1;padding:14px 24px;background:linear-gradient(135deg,#10b981,#059669);color:#ffffff;border:none;border-radius:10px;font-weight:700;font-size:15px;cursor:pointer;transition:all 0.2s ease;box-shadow:0 4px 14px rgba(16,185,129,0.25);" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(16,185,129,0.35)';" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 14px rgba(16,185,129,0.25)';">✓ Accept & Move to Next Round</button>` : ''}
+          ${app.status !== 'rejected' ? `<button id="rejectApp" style="flex:1;padding:14px 24px;background:${isDark ? 'rgba(239,68,68,0.15)' : 'rgba(239,68,68,0.1)'};color:#ef4444;border:1px solid rgba(239,68,68,0.3);border-radius:10px;font-weight:700;font-size:15px;cursor:pointer;transition:all 0.2s ease;" onmouseover="this.style.background='rgba(239,68,68,0.2)';this.style.borderColor='rgba(239,68,68,0.5)';" onmouseout="this.style.background='${isDark ? 'rgba(239,68,68,0.15)' : 'rgba(239,68,68,0.1)'}';this.style.borderColor='rgba(239,68,68,0.3)';">✕ Reject Application</button>` : ''}
+        </div>
+        ` : ''}
+        
       </div>
     `;
 
@@ -300,7 +358,7 @@
       if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
 
       const a = allApplicants.find(x => x.id === appId);
-      if(a) a.status = 'accepted';
+      if(a) a.status = 'shortlisted';
 
       updateStats();
       renderApplicants();

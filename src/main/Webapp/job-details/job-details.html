@@ -44,14 +44,73 @@
     .app-name{ font-weight:700; font-size:16px; }
     .app-status{ padding:6px 10px; border-radius:999px; font-size:12px; font-weight:700; }
     .s-under_review, .s-under-review{ background:rgba(234,179,8,0.18); color:#f59e0b; border:1px solid rgba(234,179,8,0.35); }
-    .s-accepted{ background:rgba(16,185,129,0.18); color:#22c55e; border:1px solid rgba(16,185,129,0.35); }
+    .s-shortlisted{ background:rgba(16,185,129,0.18); color:#22c55e; border:1px solid rgba(16,185,129,0.35); }
     .s-rejected{ background:rgba(239,68,68,0.18); color:#ef4444; border:1px solid rgba(239,68,68,0.35); }
     .app-details{ color:var(--muted); font-size:13px; display:flex; flex-direction:column; gap:4px; }
     .actions{ display:flex; gap:8px; margin-top:10px; }
-    .btn{ padding:10px 12px; border-radius:10px; border:0; background:linear-gradient(90deg,var(--accent2),var(--accent1)); color:#022027; font-weight:700; cursor:pointer; box-shadow:0 8px 22px rgba(2,8,23,0.10); }
+
+    /* Professional button styles */
+    .btn{
+      padding:10px 16px;
+      border-radius:8px;
+      border:0;
+      background:linear-gradient(135deg,var(--accent1),var(--accent2));
+      color:#ffffff;
+      font-weight:600;
+      font-size:14px;
+      cursor:pointer;
+      box-shadow:0 2px 8px rgba(96,165,250,0.25);
+      transition:all 0.2s ease;
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+    }
+    .btn:hover{
+      transform:translateY(-1px);
+      box-shadow:0 4px 12px rgba(96,165,250,0.35);
+    }
+
+    /* View Details button - subtle, secondary style */
+    .btn.view-btn{
+      background:rgba(96,165,250,0.1);
+      color:var(--accent1);
+      border:1px solid rgba(96,165,250,0.25);
+      box-shadow:none;
+      font-weight:600;
+    }
+    body.theme-light .btn.view-btn{
+      background:rgba(96,165,250,0.08);
+      border:1px solid rgba(96,165,250,0.2);
+    }
+    .btn.view-btn:hover{
+      background:rgba(96,165,250,0.18);
+      border-color:rgba(96,165,250,0.4);
+      box-shadow:0 2px 8px rgba(96,165,250,0.15);
+    }
+
+    /* Reject button - serious, professional red */
+    .btn.reject-btn{
+      background:rgba(239,68,68,0.1);
+      color:#ef4444;
+      border:1px solid rgba(239,68,68,0.25);
+      box-shadow:none;
+      font-weight:600;
+    }
+    body.theme-light .btn.reject-btn{
+      background:rgba(239,68,68,0.08);
+      border:1px solid rgba(239,68,68,0.2);
+    }
+    .btn.reject-btn:hover:not(:disabled){
+      background:rgba(239,68,68,0.18);
+      border-color:rgba(239,68,68,0.4);
+      box-shadow:0 2px 8px rgba(239,68,68,0.2);
+    }
+    .btn.reject-btn:disabled{
+      opacity:0.4;
+      cursor:not-allowed;
+    }
+
     .ghost{ padding:9px 12px; background:transparent; color:var(--muted); border:1px solid rgba(0,0,0,0.10); border-radius:10px; cursor:pointer; }
-    .danger{ background:linear-gradient(90deg,#ef4444,#f97316); color:#fff; }
-    .success{ background:linear-gradient(90deg,#22c55e,#60a5fa); color:#022027; }
     .btn:disabled{ opacity:.6; cursor:not-allowed; }
     .controls{ display:flex; gap:8px; margin-bottom:10px; }
     .input, select{ padding:10px 12px; border-radius:10px; border:1px solid rgba(0,0,0,0.10); background:transparent; color:var(--text); font-family:inherit; }
@@ -113,7 +172,7 @@
           <select id="statusFilter" class="input">
             <option value="all">All Status</option>
             <option value="under_review">Under Review</option>
-            <option value="accepted">Accepted</option>
+            <option value="shortlisted">Accepted</option>
             <option value="rejected">Rejected</option>
           </select>
         </div>
@@ -132,7 +191,12 @@
         </section>
         <section class="card">
           <h3 style="margin:0 0 10px 0">Next Steps</h3>
-          <button id="moveNextBtn" class="btn" style="width:100%">Move Selected to Next Round →</button>
+          <button id="moveNextBtn" class="btn" style="width:100%;background:linear-gradient(135deg,#10b981,#059669);color:#ffffff;box-shadow:0 2px 8px rgba(16,185,129,0.25);">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:18px;height:18px;display:inline-block;margin-right:6px;">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Move Selected to Next Round
+          </button>
         </section>
       </aside>
     </div>
