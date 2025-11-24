@@ -171,7 +171,7 @@ public class ApplicationSubmitServlet extends HttpServlet {
                     .setParameter(7, relativePath)
                     .setParameter(8, sanitizedCoverLetter)
                     .setParameter(9, java.sql.Timestamp.from(OffsetDateTime.now().toInstant()))
-                    .setParameter(10, "submitted")
+                    .setParameter(10, "under_review")  // Changed from "submitted" to "under_review"
                     .setParameter(11, java.sql.Timestamp.from(OffsetDateTime.now().toInstant()))
                     .executeUpdate();
 

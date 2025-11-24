@@ -43,8 +43,7 @@
     .app-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:10px; }
     .app-name{ font-weight:700; font-size:16px; }
     .app-status{ padding:6px 10px; border-radius:999px; font-size:12px; font-weight:700; }
-    .s-new{ background:rgba(59,130,246,0.18); color:#60a5fa; border:1px solid rgba(59,130,246,0.35); }
-    .s-under-review{ background:rgba(234,179,8,0.18); color:#f59e0b; border:1px solid rgba(234,179,8,0.35); }
+    .s-under_review, .s-under-review{ background:rgba(234,179,8,0.18); color:#f59e0b; border:1px solid rgba(234,179,8,0.35); }
     .s-accepted{ background:rgba(16,185,129,0.18); color:#22c55e; border:1px solid rgba(16,185,129,0.35); }
     .s-rejected{ background:rgba(239,68,68,0.18); color:#ef4444; border:1px solid rgba(239,68,68,0.35); }
     .app-details{ color:var(--muted); font-size:13px; display:flex; flex-direction:column; gap:4px; }
@@ -55,8 +54,16 @@
     .success{ background:linear-gradient(90deg,#22c55e,#60a5fa); color:#022027; }
     .btn:disabled{ opacity:.6; cursor:not-allowed; }
     .controls{ display:flex; gap:8px; margin-bottom:10px; }
-    .input, select{ padding:10px 12px; border-radius:10px; border:1px solid rgba(0,0,0,0.10); background:transparent; color:var(--text); }
-    body.theme-light .input, body.theme-light select{ background:#fff; color:var(--text-light); border:1px solid rgba(0,0,0,0.12); }
+    .input, select{ padding:10px 12px; border-radius:10px; border:1px solid rgba(0,0,0,0.10); background:transparent; color:var(--text); font-family:inherit; }
+
+    /* Better dropdown styling (from add-job.html) */
+    select{ appearance:none; -webkit-appearance:none; -moz-appearance:none; padding:10px 12px; padding-right:36px; border-radius:10px; cursor:pointer; border:1px solid rgba(255,255,255,0.15); background:#10243d; color:var(--text); }
+    body.theme-light select{ background:#ffffff; border:1px solid rgba(0,0,0,0.12); color:var(--text-light); }
+    select option{ padding:8px; }
+    body:not(.theme-light) select option{ background:#0d1c31; color:var(--text-dark); }
+    body.theme-light select option{ background:#ffffff; color:var(--text-light); }
+
+    body.theme-light .input{ background:#fff; color:var(--text-light); border:1px solid rgba(0,0,0,0.12); }
     .center{ text-align:center; color:var(--muted); padding:20px; }
     @media (max-width:968px){ .layout{ grid-template-columns:1fr; } body{ padding:14px; } .card{ padding:16px; } }
   </style>
@@ -105,8 +112,7 @@
           <input id="searchBox" class="input" placeholder="Search applicants…" />
           <select id="statusFilter" class="input">
             <option value="all">All Status</option>
-            <option value="new">New</option>
-            <option value="under-review">Under Review</option>
+            <option value="under_review">Under Review</option>
             <option value="accepted">Accepted</option>
             <option value="rejected">Rejected</option>
           </select>
@@ -119,7 +125,6 @@
           <h3 style="margin:0 0 10px 0">Application Stats</h3>
           <div style="display:grid; gap:8px;">
             <div style="display:flex; justify-content:space-between;"><span class="muted">Total</span><strong id="totalApplicants">0</strong></div>
-            <div style="display:flex; justify-content:space-between;"><span class="muted">New</span><strong id="newApplicants">0</strong></div>
             <div style="display:flex; justify-content:space-between;"><span class="muted">Under Review</span><strong id="reviewApplicants">0</strong></div>
             <div style="display:flex; justify-content:space-between;"><span class="muted">Accepted</span><strong id="acceptedApplicants">0</strong></div>
             <div style="display:flex; justify-content:space-between;"><span class="muted">Rejected</span><strong id="rejectedApplicants">0</strong></div>

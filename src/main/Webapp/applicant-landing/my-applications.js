@@ -43,6 +43,11 @@
     return type.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
   }
 
+  function escapeHtml(text) {
+    if (!text) return '';
+    return String(text).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[s]));
+  }
+
   function mapStatusDisplay(status) {
     const statusMap = {
       'submitted': 'Submitted',
@@ -88,9 +93,68 @@
         return;
       }
 
-      applicationsEl.innerHTML = applications.map(app => {
+      // Fetch interview details for each application
+      const appsWithInterviews = await Promise.all(applications.map(async app => {
+        try {
+          const interviewResp = await fetch(`/api/interviews/application/${app.id}`);
+          if (interviewResp.ok) {
+            app.interviews = await interviewResp.json();
+          } else {
+            app.interviews = [];
+          }
+        } catch (e) {
+          app.interviews = [];
+        }
+        return app;
+      }));
+
+      applicationsEl.innerHTML = appsWithInterviews.map(app => {
         const job = app.job || {};
         const hasScore = app.matchScore !== null && app.matchScore !== undefined;
+        const hasInterviews = app.interviews && app.interviews.length > 0;
+
+        // Interview details HTML
+        let interviewsHtml = '';
+        if (hasInterviews) {
+          interviewsHtml = '<div style="margin-top:12px;padding:12px;background:rgba(168,85,247,0.08);border-radius:8px;border:1px solid rgba(168,85,247,0.25);">' +
+            '<div style="font-weight:700;color:var(--accent1);margin-bottom:8px;">📅 Interview Scheduled</div>';
+
+          app.interviews.forEach(interview => {
+            const startDate = new Date(interview.scheduledStart);
+            const formattedDate = startDate.toLocaleDateString('en-US', {
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
+            });
+            const formattedTime = startDate.toLocaleTimeString('en-US', {
+              hour: '2-digit',
+              minute: '2-digit'
+            });
+
+            interviewsHtml += `
+              <div style="margin-top:8px;">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                  <span>🕒</span>
+                  <span><strong>${formattedDate}</strong> at ${formattedTime}</span>
+                </div>
+                ${interview.location ? `
+                  <div style="display:flex;align-items:center;gap:8px;margin-top:4px;color:var(--muted);font-size:13px;">
+                    <span>📍</span>
+                    <span>${escapeHtml(interview.location)}</span>
+                  </div>
+                ` : ''}
+                ${interview.notes ? `
+                  <div style="margin-top:6px;color:var(--muted);font-size:13px;">
+                    <strong>Notes:</strong> ${escapeHtml(interview.notes)}
+                  </div>
+                ` : ''}
+              </div>
+            `;
+          });
+
+          interviewsHtml += '</div>';
+        }
 
         return `
           <div class="application">
@@ -130,6 +194,8 @@
               </div>
               ` : ''}
             </div>
+            
+            ${interviewsHtml}
           </div>
         `;
       }).join('');

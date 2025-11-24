@@ -19,6 +19,7 @@ public class AppConfig extends Application {
         s.add(ManagerResource.class);
         s.add(AuthResource.class);
         s.add(ApplicationResource.class);
+        s.add(InterviewResource.class);  // Add Interview endpoints
         s.add(LoggingFilter.class);
         // register JacksonFeature so Jersey can (de)serialize JSON for Collections/POJOs
         s.add(JacksonFeature.class);
