@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Schedule Interview — TalentFlow</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root{ --bg-dark-top:#071428; --bg-dark-bottom:#0b2340; --bg-light-top:#f6f9fc; --bg-light-bottom:#e9f0f6; --text-dark:#e9f3ff; --text-light:#0b1220; --muted-dark:#9aa7bb; --muted-light:#5b6b78; --accent1:#60a5fa; --accent2:#6ee7b7; --radius:12px; --shadow:0 12px 30px rgba(2,8,23,0.16); font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto; }
+        html,body{height:100%;margin:0;padding:0}
+        body{ --text:var(--text-dark); --muted:var(--muted-dark); background:linear-gradient(180deg,var(--bg-dark-top) 0%,var(--bg-dark-bottom) 100%); background-attachment:fixed; min-height:100vh; color:var(--text); padding:26px; }
+        body.theme-light{ --text:var(--text-light); --muted:var(--muted-light); background:linear-gradient(180deg,var(--bg-light-top) 0%,var(--bg-light-bottom) 100%); }
+        *{box-sizing:border-box}
+        .wrap{ max-width:980px; margin:0 auto; }
+        header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+        .title h1{ margin:0; font-size:22px; font-weight:700; }
+        .hint{margin:0;color:var(--muted);font-size:14px}
+        .card{ background:color-mix(in srgb,var(--text) 3%,transparent); border-radius:var(--radius); padding:20px; margin-bottom:14px; box-shadow:var(--shadow); }
+        .theme-control{ display:flex; align-items:center; gap:10px; cursor:pointer; }
+        .toggle{ width:56px; height:30px; border-radius:999px; background:rgba(255,255,255,0.06); position:relative; }
+        .toggle .knob{ position:absolute; top:4px; left:4px; width:22px; height:22px; border-radius:50%; background:#fff; transition:left .22s ease; }
+        body.theme-light .toggle{ background:rgba(0,0,0,0.08); }
+        body.theme-light .toggle .knob{ left:30px; background:#111827; }
+        .muted{ color:var(--muted); font-size:13px; }
+        .jobs, .applicants{ display:grid; gap:10px; }
+        .job-item, .applicant-item{ padding:14px; border-radius:10px; border:1px solid rgba(0,0,0,0.06); background:rgba(255,255,255,0.02); cursor:pointer; }
+        .job-item:hover, .applicant-item:hover{ border-color:rgba(96,165,250,0.45); }
+        .form-section{ display:none; }
+        .form-section.active{ display:block; }
+        .form-group{ margin-bottom:16px; }
+        .form-group label{ display:block; font-weight:600; margin-bottom:6px; font-size:14px; }
+        .form-group input, .form-group textarea, .form-group select{ width:100%; padding:12px; border-radius:8px; border:1px solid rgba(0,0,0,0.12); background:rgba(255,255,255,0.04); color:var(--text); font-size:14px; }
+        .form-row{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+        .btn{ padding:12px 24px; border-radius:8px; border:none; font-weight:600; cursor:pointer; }
+        .btn-primary{ background:linear-gradient(90deg,var(--accent1),var(--accent2)); color:#022027; }
+        .btn-secondary{ background:rgba(255,255,255,0.08); color:var(--text); }
+        .back-btn{ display:inline-block; padding:8px 16px; border-radius:8px; background:rgba(255,255,255,0.06); color:var(--text); text-decoration:none; margin-bottom:16px; }
+        .center{ text-align:center; color:var(--muted); padding:20px; }
+        .error{ color:#ef4444; }
+        .success{ color:#22c55e; }
+    </style>
+    <script>
+        // Simple persisted theme
+        (function(){
+            try { if (localStorage.getItem('theme') === 'light') document.addEventListener('DOMContentLoaded', ()=>document.body.classList.add('theme-light')); } catch(e){}
+        })();
+    </script>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self'">
+</head>
+<body>
+<div class="wrap">
+    <header>
+        <div class="title">
+            <h1>Schedule Interview</h1>
+            <p class="hint">Select a job and applicant to schedule an interview</p>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px">
+            <div class="theme-control" id="themeControl">
+                <span class="muted">Dark Mode</span>
+                <div class="toggle"><div class="knob"></div></div>
+            </div>
+            <!-- New: data source indicator and mock toggle -->
+            <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);">
+                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                    <input type="checkbox" id="useMockToggle" style="width:16px;height:16px;" />
+                    <span>Use mock data</span>
+                </label>
+                <div id="dataSource" class="muted">Data: server</div>
+            </div>
+        </div>
+    </header>
+
+    <section id="jobsSection" class="card form-section active">
+        <h2 style="margin:0 0 16px 0;font-size:18px">Step 1: Select a Job</h2>
+        <div id="jobsContainer" class="jobs">
+            <div class="center">Loading jobs…</div>
+        </div>
+    </section>
+
+    <section id="applicantsSection" class="card form-section">
+        <a href="#" class="back-btn" id="backToJobs">← Back to Jobs</a>
+        <h2 style="margin:0 0 16px 0;font-size:18px">Step 2: Select an Applicant</h2>
+        <div id="applicantsContainer" class="applicants">
+            <div class="center">Loading applicants…</div>
+        </div>
+    </section>
+
+    <section id="interviewFormSection" class="card form-section">
+        <a href="#" class="back-btn" id="backToApplicants">← Back to Applicants</a>
+        <h2 style="margin:0 0 16px 0;font-size:18px">Step 3: Interview Details</h2>
+        <div id="msg" class="center" style="display:none"></div>
+        <form id="interviewForm">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Interview Date</label>
+                    <input type="date" id="interviewDate" required />
+                </div>
+                <div class="form-group">
+                    <label>Interview Time</label>
+                    <input type="time" id="interviewTime" required />
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Duration</label>
+                <select id="interviewDuration" required>
+                    <option value="">Select duration</option>
+                    <option value="30">30 minutes</option>
+                    <option value="60">1 hour</option>
+                    <option value="90">1.5 hours</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Location / Meeting Link</label>
+                <input type="text" id="interviewLocation" required />
+            </div>
+            <div class="form-group">
+                <label>Interviewer Name (optional)</label>
+                <input type="text" id="interviewerName" />
+            </div>
+            <div class="form-group">
+                <label>Notes</label>
+                <textarea id="interviewNotes"></textarea>
+            </div>
+            <div style="display:flex; gap:12px;">
+                <button type="submit" class="btn btn-primary">Schedule Interview</button>
+                <button type="button" class="btn btn-secondary" id="cancelBtn">Cancel</button>
+            </div>
+        </form>
+    </section>
+</div>
+
+<script src="schedule-interview.js"></script>
+</body>
+</html>
